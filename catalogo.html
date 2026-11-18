@@ -1,14 +1,1 @@
-<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Catálogo · Anon Reserva</title>
-<style>*{box-sizing:border-box}body{margin:auto;max-width:920px;padding:24px;color:#191919;font:16px/1.5 system-ui}header,article{border-bottom:1px solid #ddd;padding:16px 0}header,section{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}a{color:inherit}select{display:block;padding:10px;font:inherit;border:1px solid #999;border-radius:6px}h2{margin:.3em 0}article p{margin:.2em 0}</style>
-<header><b>Λ　ANON RESERVA</b><a href="https://stingray-app-2-p7j92.ondigitalocean.app/">¿Tienes un negocio?</a></header>
-<h1>Explorar negocios</h1><section><label>País<select id="country"><option value="DO">República Dominicana</option><option value="US">Estados Unidos</option></select></label><label>Categoría<select id="category"><option value="">Todas</option></select></label></section>
-<p role="status" id="status"></p><div id="results"></div><p><a href="index.html?demo=1">Explorar demostración</a></p>
-<script>
-const country=document.querySelector('#country'),category=document.querySelector('#category'),statusLine=document.querySelector('#status'),results=document.querySelector('#results');
-let rows=[],sequence=0;
-function paint(){results.replaceChildren();const matches=rows.filter(b=>!category.value||b.category===category.value);statusLine.textContent=matches.length?'':'Todavía no hay negocios publicados aquí.';
-for(const b of matches){const card=document.createElement('article');for(const [tag,value] of [['h2',b.name],['p',b.category],['p',b.address+' · '+b.city]]){const el=document.createElement(tag);el.textContent=value;card.append(el);}results.append(card);}}
-async function load(){const current=++sequence;rows=[];results.replaceChildren();category.replaceChildren(new Option('Todas',''));statusLine.textContent='Cargando negocios…';
-try{const r=await fetch('https://anontechlabs.com/api/catalog/?country='+country.value,{cache:'no-store'});if(!r.ok)throw Error();const data=await r.json();if(current!==sequence)return;rows=data.businesses;for(const c of [...new Set(rows.map(b=>b.category))].sort())category.add(new Option(c,c));paint();}catch{if(current===sequence)statusLine.textContent='No se pudo cargar el catálogo. Actualiza la página para reintentar.';}}
-country.value=localStorage.getItem('anon.catalog.country')==='US'?'US':'DO';country.onchange=()=>{localStorage.setItem('anon.catalog.country',country.value);load();};category.onchange=paint;window.addEventListener('pageshow',load);
-</script></html>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ANON Reserva</title><script>location.replace('./index.html' + location.search + location.hash);</script></head><body><a href="./index.html">Explorar negocios</a></body></html>
