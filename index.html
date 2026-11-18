@@ -2449,6 +2449,7 @@ if (location.protocol !== 'file:' && location.pathname === '/clientes') {
 
   // ../../../tmp/anon-direct/apple/app.mjs
   (async () => {
+    if (!location.search && !sessionStorage.getItem('anon.web.clientes.demo.client')) { location.replace('catalogo.html'); return; }
     const app = document.body.dataset.app === "business" ? "business" : "client";
     if (new URLSearchParams(location.search).has("inicio")) {
       sessionStorage.removeItem(`anon.web.clientes.demo.${app}`);
