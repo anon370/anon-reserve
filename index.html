@@ -128,7 +128,7 @@ dialog { border-radius: 27px; }
 <body>
   <header class="app-header">
     <a class="brand" href="./"><span aria-hidden="true" class="brand-mark">Λ</span><span>ANON<span class="brand-sub">RESERVA</span></span></a>
-    <div class="header-actions"><a class="owner-link" href="https://anontechlabs.com/api/business/" data-i18n="owner">¿Tienes un negocio?</a><button class="language-btn" id="language" type="button" aria-label="English">EN</button></div>
+    <div class="header-actions"><a class="owner-link" href="./citas.html">Mis citas · Iniciar sesión</a><a class="owner-link" href="/business/" data-i18n="owner">¿Tienes un negocio?</a><button class="language-btn" id="language" type="button" aria-label="English">EN</button></div>
   </header>
   <main class="container">
     <section class="hero">
@@ -152,7 +152,7 @@ dialog { border-radius: 27px; }
   <script>'use strict';
 
 const el = id => document.getElementById(id);
-const endpoint = 'https://anontechlabs.com/api/catalog/';
+const endpoint = '/api/plataforma/catalog/';
 const businessCategories = [
   // Same categories as the Business profile, including its older free-text labels.
   ['barberia','Barberías','Barbershops',['Barbería','Barbershop','Barber shop','Barber shops']],
@@ -194,7 +194,7 @@ let language = preference('anon.web.clientes.idioma') === 'en' ? 1 : 0;
 const t = key => translations[key][language];
 const countryParam = new URLSearchParams(location.search).get('country');
 el('country').value = ['US','DO'].includes(countryParam) ? countryParam : preference('anon.catalog.country') === 'US' ? 'US' : 'DO';
-let category = '', rows = [], state = 'loading', pending, signature = null;
+let category = '', rows = [], state = 'loading', pending, partial = false, signature = null;
 function textNode(tag, value, className) {
   const node = document.createElement(tag);
   node.textContent = value;
@@ -232,6 +232,7 @@ function drawFilters() {
 function drawResults() {
   const container = el('business-results'), notice = el('notice');
   notice.replaceChildren();
+  if (partial) notice.append(textNode('p', language ? 'Part of the directory is temporarily unavailable.' : 'Una parte del directorio está temporalmente fuera de servicio.'));
   container.replaceChildren();
   const query = normalize(el('query').value), city = el('city').value;
   const sets = new Map(), available = groups();
@@ -276,6 +277,10 @@ function drawResults() {
       mark.setAttribute('aria-hidden','true');
       const info = document.createElement('div');
       info.append(textNode('h3',row.name),textNode('p',row.city),textNode('p',row.address));
+      const book=textNode('a',language?'Book':'Reservar','btn secondary');
+      book.href='./citas.html?negocio='+encodeURIComponent(row.id);
+      if(row.id) info.append(book);
+      else info.append(textNode('small',language?'Directory listing · Online booking unavailable':'Directorio · Sin reservas en línea'));
       card.append(mark,info);
       rail.append(card);
     }
@@ -302,15 +307,22 @@ async function refresh() {
   pending = {country,controller};
   const timeout = setTimeout(()=>controller.abort(),12000);
   try {
-    const url = new URL(endpoint);
-    url.searchParams.set('country',country);
-    const response = await fetch(url,{credentials:'omit',cache:'no-store',signal:controller.signal});
-    if (!response.ok) throw Error('http');
-    const data = await response.json();
-    if (!Array.isArray(data.businesses)) throw Error('catalog');
-    if (pending?.controller !== controller) return;
-    const next = data.businesses.filter(row=>row && row.country===country && ['name','category','city','address'].every(k=>typeof row[k]==='string') && row.name.trim() && row.category.trim());
-    const nextSignature = JSON.stringify(next);
+    const read=async(path,bookable)=>{
+      const url=new URL(path,location.origin);url.searchParams.set('country',country);
+      const res=await fetch(url,{credentials:'omit',cache:'no-store',signal:controller.signal});
+      if(!res.ok)throw Error('http');
+      const data=await res.json();
+      if(!Array.isArray(data.businesses))throw Error('catalog');
+      return data.businesses.filter(row=>row && row.country===country && ['name','category','city','address'].every(k=>typeof row[k]==='string') && row.name.trim() && row.category.trim())
+        .map(row=>({...row,id:bookable?row.id:null}));
+    };
+    const results=await Promise.allSettled([read(endpoint,true),read('/api/catalog/',false)]);
+    if(pending?.controller!==controller)return;
+    const sources=results.filter(r=>r.status==='fulfilled');
+    if(!sources.length)throw Error('catalog');
+    partial=sources.length!==results.length;
+    const next=sources.flatMap(s=>s.value);
+    const nextSignature = JSON.stringify([partial,next]);
     if (state === 'ready' && nextSignature === signature) return;
     rows = next; signature = nextSignature; state = 'ready';
   } catch {
