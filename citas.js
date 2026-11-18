@@ -1,7 +1,7 @@
-import {api,el,notice,options,listen,identity,localDay,bookingList} from '/api/plataforma/ui/mercado.js';
+import {api,el,notice,options,listen,identity,localDay,bookingList,loadNotices} from 'https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.js';
 let catalog=[],slotRequest=0,retryKey=null;
 const selected=()=>catalog.find(b=>b.id===el('negocio').value);
-async function appointments(){const r=await api('bookings/?scope=client');bookingList(el('citas'),r.bookings,false,async()=>{await appointments();await slots();});}
+async function appointments(){const r=await api('bookings/?scope=client');bookingList(el('citas'),r.bookings,false,async()=>{await appointments();await slots();});await loadNotices('scope=client');}
 async function slots(){
   const request=++slotRequest,b=selected();
   options(el('hora'),[]);
