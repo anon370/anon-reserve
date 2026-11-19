@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-yWDC3qtw4oY0bYmQiIO1VQ7vjYhBbFzvfVQD34tMuzU='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-aAAZCYEJ5Bq2FrV4L312wPXdbjhnw1nraDtN4t5PFNA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -167,7 +167,7 @@ dialog { border-radius: 27px; }
         <option value="score" data-i18n="topRated">Mejor valorados</option><option value="low" data-i18n="lowPrice">Menor precio</option>
         <option value="high" data-i18n="highPrice">Mayor precio</option></select></label>
       <label><span data-i18n="score">Valoración</span><select id="score"><option value="0" data-i18n="allScores">Todas</option>
-        <option value="4" data-i18n="four">4 estrellas o más</option><option value="4.5">4.5 ★ o más</option><option value="5">5 ★</option></select></label>
+        <option value="4" data-i18n="four">4 estrellas o más</option><option value="4.5" data-i18n="fourHalf">4.5 ★ o más</option><option value="5">5 ★</option></select></label>
     </div>
     <section aria-labelledby="results-heading">
       <div class="section-heading"><h2 id="results-heading" data-i18n="heading">Tu estilo tiene un lugar.</h2></div>
@@ -200,9 +200,10 @@ const businessCategories = [
 ];
 const translations = {
   createAccount:['Crear cuenta','Create account'], guest:['Continuar como invitado','Continue as guest'],
-  profile:['Perfil','Profile'], allCategories:['Ver todas','View all'], sort:['Ordenar','Sort'], byName:['Nombre','Name'],
+  fourHalf:['4.5 ★ o más','4.5 ★ and up'], profile:['Perfil','Profile'], allCategories:['Ver todas','View all'], sort:['Ordenar','Sort'], byName:['Nombre','Name'],
   recommended:['Recomendados','Recommended'], topRated:['Mejor valorados','Top rated'], lowPrice:['Menor precio','Lowest price'],
   highPrice:['Mayor precio','Highest price'], score:['Valoración','Rating'], allScores:['Todas','All'], four:['4 estrellas o más','4 stars and up'],
+  matches:['Resultados','Results'], noPublicScores:['Todavía no hay valoraciones publicadas en este directorio.','There are no published ratings in this directory yet.'],
   noRatings:['Sin valoraciones','No ratings yet'], fromPrice:['Desde','From'], reviewCount:['valoraciones','ratings'],
   businessTab:['Negocios','Businesses'],independentTab:['Independientes','Independents'],owner:['¿Tienes un negocio?','Own a business?'], hero1:['Un momento','A moment'], hero2:['solo para ti.','just for you.'],
   intro:['Explora los negocios de tu país y encuentra tu próximo destino.','Browse businesses in your country and find your next stop.'],
@@ -314,7 +315,8 @@ function drawResults() {
   if (state !== 'ready' || !sets.size) {
     const note = document.createElement('div');
     note.className = 'catalog-note';
-    note.append(textNode('p',t(state === 'loading' ? 'loading' : state === 'error' ? 'error' : !rows.length ? 'empty' : 'noMatches')));
+    const missingScores=state==='ready' && rows.length && Number(el('score').value)>0 && !rows.some(r=>r.rating_count>0);
+    note.append(textNode('p',t(missingScores ? 'noPublicScores' : state === 'loading' ? 'loading' : state === 'error' ? 'error' : !rows.length ? 'empty' : 'noMatches')));
     if (state === 'error' || (state === 'ready' && rows.length)) {
       const retry = state === 'error';
       const button = textNode('button',t(retry?'retry':'clear'),'btn secondary');
@@ -326,12 +328,13 @@ function drawResults() {
     notice.append(note);
     return;
   }
+  if (['score','recommended'].includes(el('sort').value) && !rows.some(r=>r.rating_count>0)) notice.append(textNode('p',t('noPublicScores')));
   for (const [key,list] of sets) {
     const section = document.createElement('section');
     section.className = 'category-section';
     const heading = document.createElement('div');
     heading.className = 'section-heading category-title';
-    heading.append(textNode('h3',available.get(key) || el('sort').selectedOptions[0].textContent),textNode('span',String(list.length),'count'));
+    heading.append(textNode('h3',available.get(key) || t('matches')),textNode('span',String(list.length),'count'));
     const rail = document.createElement('div');
     rail.className = 'business-rail';
     rail.tabIndex = 0;

@@ -62,7 +62,7 @@ async function search(append=false) {
     let result = await api('independents/?'+q);
     if (current !== generation) return;
     // Early API releases omit ranking fields. Apply price and unit filters to the full matching set.
-    if (!result.ratings_available && (q.get('sort') || q.get('unit') || Number(q.get('stars')))) {
+    if (!result.ratings_available && (['low','high'].includes(q.get('sort')) || q.get('unit') || Number(q.get('stars')))) {
       const rows=[...result.offers];
       let cursor=result.next;
       while (cursor!=null && Number(q.get('stars')||0)===0) {
@@ -90,7 +90,7 @@ async function search(append=false) {
     }
     categoryChips(result.categories);
     list.append(...result.offers.map(o => card(o,result.categories)));
-    if (!list.children.length) list.append(node('p','No se encontraron servicios con estos filtros.'));
+    if (!list.children.length) list.append(node('p',Number(q.get('stars'))>0?'Todavía no hay servicios con esa valoración para estos filtros.':'No se encontraron servicios con estos filtros.'));
     next = result.next;
     el('mas').hidden = next == null;
   } catch (error) {

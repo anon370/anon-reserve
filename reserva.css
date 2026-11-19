@@ -45,3 +45,5 @@ html:has(#bienvenida[open]) { overflow:hidden }
 
 #bienvenida .entrada:focus{outline:none}
 @media(max-width:760px){#filters {align-items:stretch}}
+
+.catalog-card details a {color:inherit;text-underline-offset:3px}
