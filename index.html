@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AbvttOyipFe2jidS7pycmBuT0pPyiax1AvdXOX9m+EM='; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-C3eAVnVsrQvXTr5dWQFoyYnvZ/mMDL6l9E0KtacyUGE='; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -118,19 +118,23 @@ dialog { border-radius: 27px; }
     .catalog-note button { margin-top: 14px; }
     footer { padding-bottom: 28px; }
     @media (max-width: 760px) {
-      #filters { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+      #filters { display: grid; grid-template-columns: minmax(10.8rem,1.16fr) minmax(0,1fr); gap: 10px; padding: 12px 8px; }
+      #filters label { min-width:0 }
+      #filters select { font-size:clamp(.875rem,3.55vw,1rem); min-width:0; padding-inline:3px }
       #filters .search-field { grid-column: 1/-1; }
       .hero-copy { padding: 25px; }
       .header-actions { gap: 9px; }
       .owner-link { font-size: 12px; }
     }
-  </style>
+  .market-tabs{display:flex;justify-content:center;gap:30px;background:#fff;border-bottom:1px solid #ddd}.market-tabs a{color:inherit;text-decoration:none;padding:12px 4px}.market-tabs [aria-current]{border-bottom:2px solid;font-weight:700}
+</style>
 </head>
 <body>
   <header class="app-header">
     <a class="brand" href="./"><span aria-hidden="true" class="brand-mark">Λ</span><span>ANON<span class="brand-sub">RESERVA</span></span></a>
-    <div class="header-actions"><a class="owner-link" href="./citas.html">Mis citas · Iniciar sesión</a><a class="owner-link" href="https://whale-app-ebihq.ondigitalocean.app/" data-i18n="owner">¿Tienes un negocio?</a><button class="language-btn" id="language" type="button" aria-label="English">EN</button></div>
+    <div class="header-actions"><a class="owner-link" href="./citas.html">Mis citas · Iniciar sesión</a><a class="owner-link" href="https://whale-app-ebihq.ondigitalocean.app/?registro=cuenta" data-i18n="owner">¿Tienes un negocio?</a><button class="language-btn" id="language" type="button" aria-label="English">EN</button></div>
   </header>
+  <nav class="market-tabs" aria-label="Directorio"><a href="./" aria-current="page" data-i18n="businessTab">Negocios</a><a href="./independientes.html" data-i18n="independentTab">Independientes</a></nav>
   <main class="container">
     <section class="hero">
       <div class="hero-copy"><h1><span data-i18n="hero1">Un momento</span><br><span data-i18n="hero2">solo para ti.</span></h1><p data-i18n="intro">Explora los negocios de tu país y encuentra tu próximo destino.</p></div>
@@ -171,7 +175,7 @@ const businessCategories = [
   ['otro','Otros negocios','Other businesses',['Otro tipo de negocio','Otro negocio','Other business']]
 ];
 const translations = {
-  owner:['¿Tienes un negocio?','Own a business?'], hero1:['Un momento','A moment'], hero2:['solo para ti.','just for you.'],
+  businessTab:['Negocios','Businesses'],independentTab:['Independientes','Independents'],owner:['¿Tienes un negocio?','Own a business?'], hero1:['Un momento','A moment'], hero2:['solo para ti.','just for you.'],
   intro:['Explora los negocios de tu país y encuentra tu próximo destino.','Browse businesses in your country and find your next stop.'],
   country:['País','Country'], DO:['República Dominicana','Dominican Republic'], US:['Estados Unidos','United States'],
   city:['Ciudad','City'], cities:['Todas las ciudades','All cities'], search:['Buscar','Search'], placeholder:['Nombre o categoría','Name or category'],
