@@ -48,6 +48,9 @@ function card(offer, categories) {
   if (offer.rating_count) row.append(node('p','★ '+Number(offer.rating_average).toFixed(1)+' · '+offer.rating_count+' valoraciones'));
   else if (offer.rating_count===0) row.append(node('p','Sin valoraciones'));
   if (offer.recommended) row.append(node('strong','Recomendado'));
+  const report = node('a','Reportar publicación');
+  report.href='./legal-v1.html?'+new URLSearchParams({tipo:'publicacion',id:offer.id})+'#contacto';
+  row.append(report);
   if (offer.phone) row.append(phone);
   row.append(request);
   return row;
