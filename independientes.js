@@ -1,3 +1,4 @@
+import {ratingForm} from './valoraciones.js';
 import {api, el, identity, listen, node, notice} from 'https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.js';
 
 const filters = el('filtros'), form = el('solicitud'), list = el('directorio');
@@ -43,7 +44,12 @@ function card(offer, categories) {
   info.className = 'status'; description.className = 'description';
   phone.href = 'tel:'+offer.phone.replace(/[^+0-9]/g,'');
   request.onclick = () => begin(offer);
-  row.append(node('h3',offer.title),node('strong',offer.public_name),info,description,node('p',price),phone,request);
+  row.append(node('h3',offer.title),node('strong',offer.public_name),info,description,node('p',price));
+  if (offer.rating_count) row.append(node('p','★ '+Number(offer.rating_average).toFixed(1)+' · '+offer.rating_count+' valoraciones'));
+  else if (offer.rating_count===0) row.append(node('p','Sin valoraciones'));
+  if (offer.recommended) row.append(node('strong','Recomendado'));
+  if (offer.phone) row.append(phone);
+  row.append(request);
   return row;
 }
 
@@ -53,11 +59,32 @@ async function search(append=false) {
   el('mas').hidden = true;
   if (!append) list.replaceChildren();
   try {
-    const result = await api('independents/?'+q);
+    let result = await api('independents/?'+q);
     if (current !== generation) return;
+    // Early API releases omit ranking fields. Apply price and unit filters to the full matching set.
+    if (!result.ratings_available && (q.get('sort') || q.get('unit') || Number(q.get('stars')))) {
+      const rows=[...result.offers];
+      let cursor=result.next;
+      while (cursor!=null && Number(q.get('stars')||0)===0) {
+        const more=new URLSearchParams(q); more.set('offset',cursor);
+        const page=await api('independents/?'+more);
+        if (current!==generation) return;
+        rows.push(...page.offers); cursor=page.next;
+      }
+      const matches=rows.filter(row=>(!q.get('unit') || row.unit===q.get('unit')) &&
+        Number(row.rating_average||0)>=Number(q.get('stars')||0));
+      if (['low','high'].includes(q.get('sort'))) matches.sort((a,b)=>{
+        if (a.price==null || b.price==null) return Number(a.price==null)-Number(b.price==null);
+        return (Number(a.price)-Number(b.price))*(q.get('sort')==='low'?1:-1);
+      });
+      result={...result,offers:matches,next:null};
+    }
     if (!append) {
-      filters.elements.city.replaceChildren(new Option('Todas las ciudades',''),...result.cities.map(c=>new Option(c,c)));
-      filters.elements.city.value = result.cities.includes(q.get('city')) ? q.get('city') : '';
+      const cities=[...new Set([...(q.get('country')==='DO'?['Santiago','Santo Domingo','Moca']:[]),...result.cities])].sort((a,b)=>a.localeCompare(b,'es'));
+      filters.elements.city.replaceChildren(new Option('Todas las ciudades',''),...cities.map(c=>new Option(c,c)));
+      filters.elements.city.value = cities.includes(q.get('city')) ? q.get('city') : '';
+      for (const select of filters.querySelectorAll('.picker select'))
+        select.nextElementSibling.textContent=select.selectedOptions[0]?.textContent||'';
       filters.elements.category.replaceChildren(new Option('Todas las categorías',''),...Object.entries(result.categories).map(([v,n])=>new Option(n,v)));
       filters.elements.category.value = q.get('category') || '';
     }
@@ -75,6 +102,9 @@ async function outbox() {
   el('enviadas').replaceChildren(...requests.map(r => {
     const row = node('article');
     row.append(node('strong',r.title),node('p',r.handled?'Atendida':'Pendiente'));
+    if (r.can_rate) row.append(ratingForm(r.my_rating,async stars=>{
+      await api('independents/requests/'+r.id+'/rating/','POST',{stars}); await search();
+    }));
     return row;
   }));
   if (!requests.length) el('enviadas').append(node('p','Aún no has enviado solicitudes.'));
@@ -88,7 +118,8 @@ el('todas').onclick = () => {
   if (!picker.hidden) filters.elements.category.focus();
 };
 filters.elements.country.onchange = () => {filters.elements.city.value = ''; search();};
-filters.elements.city.onchange = filters.elements.category.onchange = () => search();
+for (const field of ['city','category','sort','stars','unit'])
+  filters.elements[field].onchange = () => search();
 el('mas').onclick = () => search(true);
 el('cancelar').onclick = () => {selected=null;el('solicitar').hidden=true;};
 el('perfil').onclick = () => {
@@ -114,3 +145,5 @@ identity(async () => {
   await outbox();
   if (selected) begin(selected);
 }).catch(error=>notice(error.message));
+
+el('acceso').querySelector('h2').textContent='ANON Reserva';

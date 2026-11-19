@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="82 658 545 140" role="img" aria-label="ANON">
+  <g fill="#101010">
+    <path d="M83 792l46-127h35l46 127h-29l-34.5-99L112 792z"/>
+    <path id="n" d="M216 792V665h29l70 89v-89h29v127h-29l-70-89v89z"/>
+    <path d="M473 680a69 69 0 1 0 9 14l-15 12a51 51 0 1 1-19-22c-24 16-50 44-63 72 22-24 56-53 88-76z"/>
+    <use href="#n" x="283"/>
+  </g>
+</svg>
