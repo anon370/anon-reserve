@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-3mDSfZD86ro3WHmXJfz9kvemoCkQO5iw3/6T6DOxpOc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-zVQE4QBssJpb80EgwUGmLOW/kNNAuxGYrcKotExEg88='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -129,7 +129,16 @@ dialog { border-radius: 27px; }
   .market-tabs{display:flex;justify-content:center;gap:30px;background:#fff;border-bottom:1px solid #ddd}.market-tabs a{color:inherit;text-decoration:none;padding:12px 4px}.market-tabs [aria-current]{border-bottom:2px solid;font-weight:700}
 </style>
 <link rel="stylesheet" href="./reserva.css">
-</head>
+<style>
+#business-results .business-rail{gap:.6rem}
+#business-results .catalog-card{display:flex;flex-direction:column;align-items:stretch;gap:.35rem;padding:.55rem;flex:0 0 min(44%,15rem);max-width:none;overflow:hidden;border:1px solid #dedede;border-radius:12px;background:white;color:#161616;text-decoration:none}
+#business-results .catalog-card h3{margin:0;font-size:1rem;line-height:1.25}
+#business-results .cover{display:grid;place-items:center;aspect-ratio:16/10;background:#efefef;color:#525252;overflow:hidden;border-radius:7px;font-weight:650}
+#business-results .cover img{width:100%;height:100%;object-fit:cover}
+#business-results .starting-price{font-weight:650;color:#222}
+#business-results .category-toggle{color:inherit;background:none;border:0;padding:.5rem .15rem;font:inherit;cursor:pointer}
+#business-results .category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(42%,12rem),1fr));gap:.65rem}
+</style></head>
 <body>
   <dialog id="bienvenida" aria-label="ANON Reserva">
     <div class="entrada" tabindex="-1" autofocus>
@@ -213,7 +222,7 @@ const translations = {
   loading:['Cargando negocios…','Loading businesses…'], error:['No se pudo cargar el catálogo.','The catalog could not be loaded.'],
   retry:['Volver a intentar','Try again'], empty:['Todavía no hay negocios publicados en este país.','There are no published businesses in this country yet.'],
   noMatches:['No hay negocios que coincidan con estos filtros.','No businesses match these filters.'],
-  clear:['Ver todos los negocios','Show all businesses'], title:['Explorar negocios · ANON Reserva','Explore businesses · ANON Reserva']
+  clear:['Limpiar filtros','Clear filters'], title:['Explorar negocios · ANON Reserva','Explore businesses · ANON Reserva']
 };
 const preference = key => { try { return localStorage.getItem(key); } catch { return null; } };
 function remember(key,value) { try { localStorage.setItem(key,value); } catch {} }
@@ -297,8 +306,45 @@ function compareRows(a,b) {
     default: return a.name.localeCompare(b.name,language?'en':'es');
   }
 }
+// Load the public profile photo only when its card approaches the viewport.
+const photoCache = new Map();
+let photoObserver;
+async function showPhoto(box) {
+  const id = box.dataset.business;
+  let entry = photoCache.get(id);
+  if (!entry || Date.now() - entry.time > 60000) {
+    const request = fetch(new URL(encodeURIComponent(id)+'/',endpoint), {
+      credentials:'omit', signal:AbortSignal.timeout(12000)
+    }).then(async response => {
+      if (!response.ok) throw Error('photo');
+      return (await response.json()).profile_photo || '';
+    });
+    entry = {time:Date.now(),request};
+    photoCache.set(id,entry);
+    if (photoCache.size > 50) photoCache.delete(photoCache.keys().next().value);
+  }
+  try {
+    const src = await entry.request;
+    if (!box.isConnected || !/^data:image\/jpeg;base64,/i.test(src)) return;
+    const image = document.createElement('img');
+    image.alt = '';
+    image.src = src;
+    await image.decode();
+    box.replaceChildren(image);
+  } catch {
+    if (photoCache.get(id) === entry) photoCache.delete(id);
+  }
+}
+const expandedCategories = new Set();
 function drawResults() {
   const container = el('business-results'), notice = el('notice');
+  photoObserver?.disconnect();
+  photoObserver = new IntersectionObserver(entries => {
+    for (const item of entries) if (item.isIntersecting) {
+      photoObserver.unobserve(item.target);
+      showPhoto(item.target);
+    }
+  });
   notice.replaceChildren();
   container.replaceChildren();
   const query = normalize(el('query').value), city = el('city').value;
@@ -334,46 +380,44 @@ function drawResults() {
     section.className = 'category-section';
     const heading = document.createElement('div');
     heading.className = 'section-heading category-title';
-    heading.append(textNode('h3',available.get(key) || t('matches')),textNode('span',String(list.length),'count'));
+    const label = available.get(key) || t('matches');
+    heading.append(textNode('h3',label));
+    const expanded = expandedCategories.has(key);
+    if (list.length > 5) {
+      const feminine = ['barberia','cafeteria','tienda','suplidora','ferreteria'].includes(key);
+      const action = language ? 'View all' : feminine ? 'Ver todas' : 'Ver todos';
+      const toggle = textNode('button',expanded ? (language?'Show less':'Ver menos') : action+' ('+list.length+')','category-toggle');
+      toggle.type = 'button';
+      toggle.setAttribute('aria-expanded',String(expanded));
+      toggle.setAttribute('aria-label',toggle.textContent+' · '+label);
+      toggle.onclick = () => {
+        if (expanded) expandedCategories.delete(key);
+        else expandedCategories.add(key);
+        drawResults();
+        [...container.querySelectorAll('.category-section')].find(node=>node.dataset.category===key)?.querySelector('button')?.focus({preventScroll:true});
+      };
+      heading.append(toggle);
+    }
+    section.dataset.category = key;
     const rail = document.createElement('div');
-    rail.className = 'business-rail';
+    rail.className = expanded ? 'category-grid' : 'business-rail';
     rail.tabIndex = 0;
     rail.setAttribute('role','region');
-    rail.setAttribute('aria-label',heading.textContent);
-    for (const row of list) {
-      const card = document.createElement('article');
+    rail.setAttribute('aria-label',label);
+    for (const row of expanded ? list : list.slice(0,5)) {
+      const card = document.createElement(row.id ? 'a' : 'article');
+      if (row.id) card.href = './ficha.html?negocio='+encodeURIComponent(row.id);
       card.className = 'business-card catalog-card';
-      const initials = row.name.trim().split(/\s+/u).slice(0,2).map(word=>[...word][0]).join('');
-      const mark = textNode('span',initials.toUpperCase(),'avatar');
-      mark.setAttribute('aria-hidden','true');
-      const info = document.createElement('div');
-      const title=textNode('h3',row.name);
-      if(row.id){const view=textNode('a',row.name);view.href='./ficha.html?negocio='+encodeURIComponent(row.id);title.replaceChildren(view);}
-      info.append(title,textNode('p',row.city),textNode('p',row.address));
-      const price = minimumPrice(row);
-      if (price !== null) info.append(textNode('p',t('fromPrice')+' '+(row.country==='DO'?'RD$':'US$')+price.toLocaleString(language?'en-US':'es-DO')));
-      if (row.rating_count) info.append(textNode('p','★ '+publicRating(row).toFixed(1)+' · '+row.rating_count+' '+t('reviewCount'),'rating-line'));
-      else if (row.rating_count===0) info.append(textNode('p',t('noRatings')));
-      if (row.recommended) info.append(textNode('strong',language?'Recommended':'Recomendado'));
-      if (row.services?.length || row.products?.length) {
-        const details=document.createElement('details');
-        details.append(textNode('summary',language?'Services and prices':'Servicios y precios'));
-        for (const item of [...(row.services||[]),...(row.products||[])]) {
-          const line=textNode('p',item.name+' · '+(row.country==='DO'?'RD$':'US$')+Number(item.price).toLocaleString(language?'en-US':'es-DO'));
-          if (row.id && row.services?.includes(item)) {
-            const link=textNode('a',language?'Reserve':'Reservar');
-            link.href='./ficha.html?'+new URLSearchParams({negocio:row.id,servicio:item.id});
-            line.append(' · ',link);
-          }
-          details.append(line);
-        }
-        info.append(details);
+      const initials = row.name.trim().split(/\s+/u).slice(0,2).map(word=>[...word][0]).join('').toUpperCase();
+      const cover = textNode('span',initials,'cover');
+      cover.setAttribute('aria-hidden','true');
+      if (row.id) {
+        cover.dataset.business = row.id;
+        photoObserver.observe(cover);
       }
-      const book=textNode('a',language?'Book':'Reservar','btn secondary');
-      book.href='./ficha.html?negocio='+encodeURIComponent(row.id);
-      if(row.id) info.append(book);
-      else info.append(textNode('small',language?'Directory listing · Online booking unavailable':'Directorio · Sin reservas en línea'));
-      card.append(mark,info);
+      card.append(textNode('h3',row.name),cover,textNode('p',row.address || row.city));
+      const price = minimumPrice(row);
+      if (price !== null) card.append(textNode('p',t('fromPrice')+' '+(row.country==='DO'?'RD$':'US$')+price.toLocaleString(language?'en-US':'es-DO'),'starting-price'));
       rail.append(card);
     }
     section.append(heading,rail);
