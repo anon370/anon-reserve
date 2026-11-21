@@ -19,9 +19,11 @@ function uploader(parent,label,initial=''){const wrap=make('div'),image=make('im
  const clear=action('Quitar foto',()=>{value='';display();});l.append(input);wrap.append(l,image,clear);parent.append(wrap);display();return ()=>value;
 }
 function promotions(parent,rows,kind){const offer=kind==="offers",menu=kind==="menu";const readers=new Map();function add(row={}){const line=make('article');const name=field(line,'Nombre',row.name,'text',100),desc=field(line,'Detalle',row.description,'text',400);name.required=true;
+ const category=menu?field(line,'Categoría del producto',row.category||'General','text',60):null;
+ const picture=menu?uploader(line,'Foto del producto',row.photo):null;
  const price=menu?field(line,'Precio en RD$',row.price,'number'):null;if(price){price.min=0;price.step='.01';}
  const start=offer?field(line,'Desde',row.start,'date'):null,end=offer?field(line,'Hasta',row.end,'date'):null;
- line.append(action('Quitar',()=>{readers.delete(line);line.remove();}));parent.append(line);readers.set(line,()=>({name:name.value.trim(),description:desc.value.trim(),...(offer?{start:start.value,end:end.value}:{}),...(menu?{price:price.value}:{})}));}
+ line.append(action('Quitar',()=>{readers.delete(line);line.remove();}));parent.append(line);readers.set(line,()=>({name:name.value.trim(),description:desc.value.trim(),...(offer?{start:start.value,end:end.value}:{}),...(menu?{price:price.value,category:category.value.trim(),photo:picture()}:{})}));}
  for(const row of rows||[])add(row);parent.append(action(offer?'Añadir oferta':menu?'Añadir producto, plato o bebida':'Añadir membresía',()=>add()));return ()=>Array.from(readers.values(),f=>f());
 }
 function pointBox(loc){
