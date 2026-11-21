@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-zVQE4QBssJpb80EgwUGmLOW/kNNAuxGYrcKotExEg88='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-10V6hKmP1JxqaUE5pjUsGjNGcpbiHT3Dp9E1/gDcNKc='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -135,7 +135,10 @@ dialog { border-radius: 27px; }
 #business-results .catalog-card h3{margin:0;font-size:1rem;line-height:1.25}
 #business-results .cover{display:grid;place-items:center;aspect-ratio:16/10;background:#efefef;color:#525252;overflow:hidden;border-radius:7px;font-weight:650}
 #business-results .cover img{width:100%;height:100%;object-fit:cover}
-#business-results .starting-price{font-weight:650;color:#222}
+#business-results .card-line{display:flex;align-items:baseline;gap:.35rem;color:#444;font-size:.875rem;line-height:1.35}
+#business-results .card-line svg{width:.95rem;height:.95rem;flex:none;align-self:flex-start;margin-top:.1rem}
+#business-results .reserve-label{margin-top:auto;display:block;padding:.55rem .25rem;background:#171717;color:white;border-radius:7px;text-align:center;font-weight:650}
+#business-results .catalog-card:focus-visible{outline:2px solid #171717;outline-offset:-2px}
 #business-results .category-toggle{color:inherit;background:none;border:0;padding:.5rem .15rem;font:inherit;cursor:pointer}
 #business-results .category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(42%,12rem),1fr));gap:.65rem}
 </style></head>
@@ -335,6 +338,25 @@ async function showPhoto(box) {
     if (photoCache.get(id) === entry) photoCache.delete(id);
   }
 }
+function cardLine(icon, label) {
+  const paths = {
+    location:'M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0ZM15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
+    review:'m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.6-4.5 6.4-.9Z',
+    phone:'M5 3h4l2 5-3 2a14 14 0 0 0 6 6l2-3 5 2v4c0 2-2 3-4 2C9 19 5 15 3 7c-.5-2 0-4 2-4Z'
+  };
+  const ns='http://www.w3.org/2000/svg';
+  const symbol=document.createElementNS(ns,'svg'), path=document.createElementNS(ns,'path');
+  symbol.setAttribute('viewBox','0 0 24 24');
+  symbol.setAttribute('aria-hidden','true');
+  path.setAttribute('fill','none');
+  path.setAttribute('stroke','currentColor');
+  path.setAttribute('stroke-width','1.7');
+  path.setAttribute('d',paths[icon]);
+  symbol.append(path);
+  const line=textNode('p','','card-line');
+  line.append(symbol,textNode('span',label));
+  return line;
+}
 const expandedCategories = new Set();
 function drawResults() {
   const container = el('business-results'), notice = el('notice');
@@ -415,9 +437,17 @@ function drawResults() {
         cover.dataset.business = row.id;
         photoObserver.observe(cover);
       }
-      card.append(textNode('h3',row.name),cover,textNode('p',row.address || row.city));
-      const price = minimumPrice(row);
-      if (price !== null) card.append(textNode('p',t('fromPrice')+' '+(row.country==='DO'?'RD$':'US$')+price.toLocaleString(language?'en-US':'es-DO'),'starting-price'));
+      card.append(textNode('h3',row.name),cover);
+      const address=row.address.trim(), city=row.city.trim();
+      const location=address && city && !normalize(address).includes(normalize(city)) ? address+', '+city : address || city;
+      if (location) card.append(cardLine('location',location));
+      const count=Number(row.rating_count) || 0;
+      const reviewWord=language ? (count===1?'review':'reviews') : (count===1?'reseña':'reseñas');
+      const reviews=count>0 ? publicRating(row).toFixed(1)+' · '+count+' '+reviewWord : (language?'No reviews yet':'Sin reseñas aún');
+      card.append(cardLine('review',reviews));
+      const phone=row.listing?.phone;
+      if (typeof phone==='string' && phone.trim()) card.append(cardLine('phone',phone.trim()));
+      if (row.id) card.append(textNode('span',language?'Book':'Reservar','reserve-label'));
       rail.append(card);
     }
     section.append(heading,rail);
