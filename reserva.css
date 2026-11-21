@@ -47,3 +47,4 @@ html:has(#bienvenida[open]) { overflow:hidden }
 @media(max-width:760px){#filters {align-items:stretch}}
 
 .catalog-card details a {color:inherit;text-underline-offset:3px}
+.profile-link{display:inline-block;font-weight:700;margin-block:9px;padding:8px 14px;color:white;background:#171717;border-radius:7px;text-decoration:none}

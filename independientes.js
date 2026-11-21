@@ -3,6 +3,7 @@ import {api, el, identity, listen, node, notice} from 'https://octopus-app-wmb69
 
 const filters = el('filtros'), form = el('solicitud'), list = el('directorio');
 list.className = 'offerlist';
+let displayedProfessionals = new Set();
 let signedIn = false, selected, requestKey, next, generation = 0, typingTimer;
 
 function categoryChips(categories) {
@@ -38,13 +39,15 @@ function begin(offer) {
 function card(offer, categories) {
   const row = node('article'), info = node('p',categories[offer.category]+' · '+offer.city);
   const description = node('p',offer.description), phone = node('a','Llamar al '+offer.phone);
-  const request = node('button','Solicitar servicio');
+  const request = node('a','Ver servicios');
+  request.className='profile-link';
+  request.href='./ficha.html?'+new URLSearchParams({profesional:offer.professional_id||offer.id,servicio:offer.id});
   const price = offer.price === null ? 'Precio a convenir' :
     (offer.country === 'DO' ? 'RD$' : 'US$')+new Intl.NumberFormat('es-DO').format(Number(offer.price))+' / '+offer.unit;
   info.className = 'status'; description.className = 'description';
   phone.href = 'tel:'+offer.phone.replace(/[^+0-9]/g,'');
-  request.onclick = () => begin(offer);
-  row.append(node('h3',offer.title),node('strong',offer.public_name),info,description,node('p',price));
+
+  row.append(node('h3',offer.public_name),node('strong',offer.title),info,description,node('p',price));
   if (offer.rating_count) row.append(node('p','★ '+Number(offer.rating_average).toFixed(1)+' · '+offer.rating_count+' valoraciones'));
   else if (offer.rating_count===0) row.append(node('p','Sin valoraciones'));
   if (offer.recommended) row.append(node('strong','Recomendado'));
@@ -80,7 +83,7 @@ async function search(append=false) {
       result={...result,offers:matches,next:null};
     }
     if (!append) {
-      const cities=[...new Set([...(q.get('country')==='DO'?['Santiago','Santo Domingo','Moca']:[]),...result.cities])].sort((a,b)=>a.localeCompare(b,'es'));
+      const cities=[...new Set([...(q.get('country')==='DO'?['Santiago de los Caballeros','Santo Domingo','La Vega','Moca','Puerto Plata','La Romana','Bonao','Higüey']:[]),...result.cities].map(c=>c.trim().toLowerCase()==='santiago'?'Santiago de los Caballeros':c))].sort((a,b)=>a.localeCompare(b,'es'));
       filters.elements.city.replaceChildren(new Option('Todas las ciudades',''),...cities.map(c=>new Option(c,c)));
       filters.elements.city.value = cities.includes(q.get('city')) ? q.get('city') : '';
       for (const select of filters.querySelectorAll('.picker select'))
@@ -89,7 +92,11 @@ async function search(append=false) {
       filters.elements.category.value = q.get('category') || '';
     }
     categoryChips(result.categories);
-    list.append(...result.offers.map(o => card(o,result.categories)));
+    if(!append) displayedProfessionals = new Set();
+    for(const offer of result.offers){
+      const key=offer.professional_id||offer.id;
+      if(!displayedProfessionals.has(key)){list.append(card(offer,result.categories));displayedProfessionals.add(key);}
+    }
     if (!list.children.length) list.append(node('p',Number(q.get('stars'))>0?'Todavía no hay servicios con esa valoración para estos filtros.':'No se encontraron servicios con estos filtros.'));
     next = result.next;
     el('mas').hidden = next == null;
@@ -123,9 +130,7 @@ for (const field of ['city','category','sort','stars','unit'])
 el('mas').onclick = () => search(true);
 el('cancelar').onclick = () => {selected=null;el('solicitar').hidden=true;};
 el('perfil').onclick = () => {
-  el('acceso-cliente').hidden = false;
-  el('acceso-cliente').scrollIntoView();
-  if(signedIn) outbox().catch(e=>notice(e.message));
+  location.assign('./citas.html?vista=perfil');
 };
 listen(form,'submit',async () => {
   const offer = selected;
@@ -143,7 +148,24 @@ identity(async () => {
   signedIn=true;
   el('perfil').textContent='Perfil';
   await outbox();
+  if(new URLSearchParams(location.search).get('vista')==='solicitudes'){el('acceso-cliente').hidden=false;el('acceso-cliente').scrollIntoView();}
   if (selected) begin(selected);
 }).catch(error=>notice(error.message));
 
 el('acceso').querySelector('h2').textContent='ANON Reserva';
+
+const entry = new URLSearchParams(location.search);
+if(entry.has('solicitar')){
+  (async()=>{
+    const id=entry.get('solicitar'), anchor=entry.get('profesional')||id;
+    let offer;
+    try{const detail=await api('independents/'+encodeURIComponent(anchor)+'/profile/');offer=detail.services.find(row=>row.id===id);}
+    catch(error){
+      let offset=0;
+      while(offset!=null){const page=await api('independents/?country=DO&offset='+offset);offer=page.offers.find(row=>row.id===id);if(offer)break;offset=page.next;}
+    }
+    if(!offer)throw Error('El servicio ya no está publicado.');
+    begin(offer);
+    (signedIn?el('solicitar'):el('acceso-cliente')).scrollIntoView();
+  })().catch(error=>notice(error.message));
+}

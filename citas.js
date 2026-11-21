@@ -2,6 +2,8 @@ import {ratingForm} from './valoraciones.js';
 import {api,el,notice,options,listen,identity,localDay,bookingList,loadNotices} from 'https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.js';
 const route = new URLSearchParams(location.search);
 let catalog=[],slotRequest=0,retryKey=null;
+const bookingMode=route.get('paso')==='horario' && route.has('negocio');
+if(route.has('negocio')&&!bookingMode) location.replace('./ficha.html?'+route);
 const selected=()=>catalog.find(b=>b.id===el('negocio').value);
 async function appointments(){
   const {bookings} = await api('bookings/?scope=client');
@@ -44,19 +46,38 @@ listen(el('reservar'),'submit',async()=>{
   await appointments();await slots();notice('Tu reserva está registrada.');
 });
 listen(el('actualizar'),'click',appointments);
-const account = identity(async()=>{
+const account = identity(async(session)=>{
   if (route.get('volver')==='catalogo' && !route.has('negocio')) {
     location.replace('./?vista=catalogo');
     return;
   }
-  el('page-title').textContent='Mis citas';
+  el('page-title').textContent=bookingMode?'Reservar una cita':'Mi perfil';
   document.querySelector('.booking-header .home-link').hidden=true;
-  const r=await api('catalog/');catalog=r.businesses;options(el('negocio'),catalog);
+  el('customer-profile').hidden=bookingMode;
+  el('booking-section').hidden=!bookingMode;
+  if(!bookingMode){
+    el('profile-name').textContent=session.user.name;
+    el('profile-email').textContent=session.user.email;
+    el('profile-phone').textContent=session.user.phone||'';
+    const actions=el('manage-profiles');actions.replaceChildren();
+    function link(text,href){const p=document.createElement('p'),a=document.createElement('a');a.textContent=text;a.href=href;p.append(a);actions.append(p);}
+    link('Mis solicitudes de servicios','./independientes.html?vista=solicitudes');
+    const owned=(session.workspaces||[]).filter(w=>w.role==='owner');
+    if(session.independent||owned.length){
+      const suffix=session.independent?'':encodeURIComponent(owned[0].id)+'/';
+      fetch('https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/storefront/settings/'+suffix,{method:'GET',credentials:'include',cache:'no-store'}).then(r=>{
+        if(!r.ok)return;
+        if(session.independent)link('Editar mi ficha de independiente','./editar-ficha.html');
+        for(const item of owned)link('Editar ficha · '+item.name,'./editar-ficha.html?negocio='+encodeURIComponent(item.id));
+      }).catch(()=>{});
+    }
+    await appointments();
+    return;
+  }
   const requested=route.get('negocio');
-  if (requested && !catalog.some(b=>b.id===requested)) {
-    el('negocio').selectedIndex=-1;
-    notice('Este negocio ya no está disponible. Puedes elegir otro.');
-  } else if(requested) el('negocio').value=requested;
+  const business=await api('catalog/'+encodeURIComponent(requested)+'/');
+  if(business.country!=='DO'){el('booking-section').hidden=true;throw Error('Este negocio no está en el catálogo dominicano.');}
+  catalog=[business];options(el('negocio'),catalog);
   await select(route.get('servicio'));await appointments();
 });
 const session = el('sesion');
@@ -75,7 +96,7 @@ session.append(menu);
 session.classList.add('account-line');
 function showAccessTitle() {
   const registering=!el('etiqueta-nombre').hidden;
-  el('page-title').textContent=route.has('negocio')?'Reservar una cita':'ANON Reserva';
+  el('page-title').textContent=bookingMode?'Reservar una cita':'Mi perfil';
   el('acceso').querySelector('h2').textContent=registering?'Crear cuenta':'Login';
 }
 el('alternar').addEventListener('click',showAccessTitle);
