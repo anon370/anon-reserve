@@ -1,18 +1,12 @@
+import {categoryPhoto, money} from "./servicio-visual.js";
 const base='https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/';
 const q=new URLSearchParams(location.search), pro=q.get('profesional'), id=pro||q.get('negocio');
 const root=document.querySelector('#profile'), foot=document.querySelector('#action');
 const list=x=>Array.isArray(x)?x:[];
-const money=v=>v==null||v===''?'A convenir':'RD$'+Number(v).toLocaleString('es-DO',{maximumFractionDigits:2});
 const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 function node(tag,text,cl){const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cl)n.className=cl;return n;}
 function button(text,action,cl){const n=node('button',text,cl);n.type='button';n.onclick=action;return n;}
 function img(src){if(typeof src!=='string'||!(/^(https:\/\/|data:image\/jpeg;base64,)/i).test(src))return null;const n=node('img');n.alt='';n.loading='lazy';n.referrerPolicy='no-referrer';n.src=src;n.onerror=()=>n.remove();return n;}
-function categoryPhoto(service='',category=''){
- const hint=(service+' '+category).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
- const groups=[['barberia',/barber|corte|barba/],['belleza',/maquilla|novia|ceja|salon|belleza|unas|peina/],['clases',/clase|tutori|educa|idioma|conta/],['cafe',/cafe|bebida|trago/],['comida',/comida|restaurante|cocina|mesa|chef|bar\b/],['oficios',/plom|elec|repara|carpin|mecani|pintura|ferreter|tecnic/],['tienda',/tienda|producto|colmado|supli|mercado/]];
- const name=groups.find(([,regexp])=>regexp.test(hint))?.[0]||'local';
- const photo=node('img');photo.src='./imagenes/'+name+'.webp';photo.alt='Imagen ilustrativa de la categoría';photo.loading='lazy';return photo;
-}
 async function read(path){const r=await fetch(base+path,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Object.assign(Error('No se pudo abrir esta ficha.'),{status:r.status});return r.json();}
 function modal(title,content){document.querySelector('#dialog-title').textContent=title;document.querySelector('#detail-body').replaceChildren(...content);document.querySelector('#details').showModal();}
 document.querySelector('#dismiss').onclick=()=>document.querySelector('#details').close();
