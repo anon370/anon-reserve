@@ -33,3 +33,14 @@
 .product-card .tile-text{padding-right:54px}
 .product-add{position:absolute;right:6px;bottom:8px;width:44px;height:44px;border:0;border-radius:8px;background:#171717;color:white;font-size:1.45rem}
 footer .product-order{width:100%}
+
+.catalog-sections{display:grid;gap:8px;margin-block:16px}
+.catalog-row{display:flex;align-items:center;gap:14px;min-height:58px;width:100%;padding:10px 15px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:var(--ink);text-align:left;font:inherit}
+.catalog-copy{display:grid;gap:2px;min-width:0;overflow-wrap:anywhere}
+.catalog-copy small{color:var(--muted)}
+.catalog-arrow{margin-left:auto;font-size:1.45rem}
+.catalog-icon{position:relative;display:inline-block;flex:none;border:1.6px solid currentColor}
+.offer-tag{width:18px;height:13px;border-radius:5px 2px 2px 5px;transform:rotate(-42deg)}
+.offer-tag::before{content:'';position:absolute;left:3px;top:4px;width:3px;height:3px;background:currentColor;border-radius:50%}
+.member-card{width:20px;height:15px;border-radius:3px}
+.member-card::before{content:'';position:absolute;top:3px;left:0;right:0;border-top:2px solid}
