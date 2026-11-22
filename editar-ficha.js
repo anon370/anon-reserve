@@ -62,15 +62,19 @@ function professionalServices(parent,inventory,session,profileFields){
 async function openEditor(session){
  if(business?!session.workspaces?.some(w=>w.id===business&&w.role==='owner'):!session.independent){throw Error('Esta cuenta no tiene acceso a esa ficha.');}
  const r=await api(path),s=r.settings||{};form.replaceChildren();
- const info=group(business?'Foto del negocio':'Datos públicos del profesional'),portrait=uploader(info,'Foto de perfil',s.portrait);
+ const info=group(business?'Foto del negocio':'Datos públicos del profesional'),previewName=make('h2',r.display_name || s.name || (business ? session.workspaces.find(w=>w.id===business)?.name : session.user.name));
+ info.append(previewName);
+ const portrait=uploader(info,'Foto de portada (opcional)',s.portrait);
+ info.querySelector('img').className='preview-cover';
  const fields={};if(!business)for(const [key,label,max] of [['name','Nombre público',100],['title','Profesión u oficio',100],['city','Ciudad',100],['mode','Modalidad de atención',100],['address','Dirección pública o zona de cobertura',240],['phone','Teléfono público',25]])fields[key]=field(info,label,s[key]||(key==='name'?session.user.name:''),'text',max);
+ if(fields.name)fields.name.addEventListener('input',()=>{previewName.textContent=fields.name.value;});
  const point=business&&r.location?.country==='DO'?pointBox(r.location):null;
  const services=group('Mis servicios');if(!r.services.length)services.append(make('p','Añade un servicio para poder asociarle una foto.'));
  if(business){const manage=make('a','Administrar servicios en Business');manage.href='https://whale-app-ebihq.ondigitalocean.app/acceso.html';services.append(manage);}
  else{const inventory=await api('independents/offers/');professionalServices(services,inventory,session,fields);}
  const items={};function servicePhoto(item){const row=make('details'),legend=make('summary','Foto · '+item.name);row.dataset.photoId=item.id;row.append(legend);services.append(row);const old=s.items?.[item.id]||{};const getPhoto=uploader(row,'Foto de '+item.name,old.photo),m=business?null:field(row,'Duración en minutos (opcional)',old.minutes,'number');if(m){m.min=1;m.max=1440;}items[item.id]=()=>({photo:getPhoto(),minutes:m?.value?Number(m.value):null});}
  for(const item of r.services)servicePhoto(item);services.addEventListener('service-added',e=>servicePhoto({id:e.detail.id,name:e.detail.title}));
- let menuPhoto,menu;if(business){const section=group('Catálogo de comida y productos');menuPhoto=uploader(section,'Foto de la carta',s.menu_photo);menu=promotions(section,s.menu,'menu');}
+ let menuPhoto,menu;{const section=group('Catálogo de comida y productos');menuPhoto=uploader(section,'Foto de la carta',s.menu_photo);menu=promotions(section,s.menu,'menu');}
  const offers=promotions(group('Ofertas de la ficha'),s.offers,'offers'),plans=promotions(group('Membresías de la ficha'),s.plans,'plans');
  const submit=make('button','Guardar ficha');submit.type='submit';submit.className='primary';form.append(submit);
  form.onsubmit=async e=>{e.preventDefault();if(submit.disabled)return;if(working){notice('Espera un momento mientras se prepara la foto.');return;}submit.disabled=true;
