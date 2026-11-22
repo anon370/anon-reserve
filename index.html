@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-FMuOC8AAf4ZctMwFfA/iJ+/gaPqLEWQwlYkBd+i2WL4=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-FMuOC8AAf4ZctMwFfA/iJ+/gaPqLEWQwlYkBd+i2WL4=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-FcGispXTjZgpH0bPvER0RZeAtrwQVVHmPLFZMOSeaoA='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -154,7 +154,7 @@ dialog { border-radius: 27px; }
 #business-results .catalog-card:focus-visible{outline:2px solid #171717;outline-offset:-2px}
 #business-results .category-toggle{color:inherit;background:none;border:0;padding:.5rem .15rem;font:inherit;cursor:pointer}
 #business-results .category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(42%,12rem),1fr));gap:.65rem}
-</style></head>
+</style><link rel="stylesheet" href="./rutas.css"></head>
 <body>
   <dialog id="bienvenida" aria-label="ANON Reserva">
     <div class="entrada" tabindex="-1" autofocus>
@@ -183,7 +183,8 @@ dialog { border-radius: 27px; }
       <label id="state-field" hidden><span data-i18n="state">Estado</span><span class="picker"><select id="us-state"><option value="" data-i18n="states">Todos los estados</option><option value="FL">Florida</option><option value="NY">New York</option></select><span class="picker-output" aria-hidden="true"></span></span></label>
       <label><span data-i18n="city">Ciudad</span><span class="picker"><select id="city"></select><span class="picker-output" aria-hidden="true"></span></span></label>
       <label class="search-field"><span data-i18n="search">Buscar</span><input type="search" id="query" placeholder="Nombre o categoría" autocomplete="off"></label>
-      <button type="button" id="activate-location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.6"/><path d="M12 1.5v3m0 15v3M1.5 12h3m15 0h3"/><circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/></svg> <span>Activar mi ubicación</span></button>
+      <button type="button" id="activate-location" aria-describedby="location-disclosure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="7.6"/><path d="M12 1.5v3m0 15v3M1.5 12h3m15 0h3"/><circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/></svg> <span>Activar mi ubicación</span></button>
+      <small id="location-disclosure"></small>
       <small id="location-status" role="status" hidden></small>
     </form>
     <div class="category-tools"><strong data-i18n="categories">Categorías</strong>
@@ -206,7 +207,7 @@ dialog { border-radius: 27px; }
   <footer>ANON TECH LABS</footer>
   <noscript>Activa JavaScript para ver los negocios publicados.</noscript>
   <script src="./geografia-eeuu.js" integrity="sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8="></script>
-  <script src="./distancia.js" integrity="sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk="></script>
+  <script src="./distancia.js" integrity="sha256-FcGispXTjZgpH0bPvER0RZeAtrwQVVHmPLFZMOSeaoA="></script>
   <script>'use strict';
 
 const el = id => document.getElementById(id);

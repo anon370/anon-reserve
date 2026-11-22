@@ -1,0 +1,11 @@
+#location-disclosure { flex-basis: 100%; grid-column: 1/-1; font-size: 12px; line-height: 1.45; color: #595959; }
+.route-note a, #location-disclosure a { color: inherit; text-underline-offset: 2px; }
+.route-estimate { min-height: 1px; }
+.route-estimate > small { display: block; font-size: 12px; line-height: 1.5; color: #4f4f4f; }
+.route-estimate > [hidden] { display: none; }
+.catalog-card .route-estimate { grid-column: 1/-1; }
+#profile .route-estimate { display: grid; justify-items: start; gap: 6px; margin-block: 10px; }
+#profile .route-estimate > small:first-child { font-size: 14px; font-weight: 600; }
+.route-locate { padding: 8px 14px; border: 0; min-height: 44px; background: #171717; color: white; font: inherit; font-weight: 600; border-radius: 10px; cursor: pointer; }
+.route-locate:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.route-locate:disabled { opacity: .65; }

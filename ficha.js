@@ -42,7 +42,9 @@ function render(b){
  desc.append(node('h1',b.name));if(portrait)desc.append(portrait);desc.append(node('p',[pro?(b.title||'Profesional independiente'):(labels[b.category]||b.category),b.city].filter(Boolean).join(' · ')));
  const stars=b.rating_count?('★ '+Number(b.rating_average).toFixed(1)+' · '+b.rating_count+' reseñas'):'Sin reseñas todavía';
  if(b.address) desc.append(node('p',b.address));
- const directions=window.businessDirections(b);
+ let routeEnglish=false;
+ try{routeEnglish=localStorage.getItem('anon.web.clientes.idioma')==='en';}catch{}
+ const directions=window.businessDirections(b,routeEnglish,false,!pro);
  if(directions) desc.append(directions);
  desc.append(node('p',stars,'rating'));title.append(desc);root.append(title);
  const head=node('div',null,'section-head');
@@ -170,14 +172,11 @@ function render(b){
  if(sections.childElementCount)root.append(sections);
  const facts=node('div',null,'facts');const reviews=button('',()=>{const lines=[node('p',stars)];for(let i=5;i>=1;i--)if(b.review_stars?.[i])lines.push(node('p',i+' ★ · '+b.review_stars[i]));modal('Reseñas',lines);});
  reviews.append(node('strong','Reseñas'),node('small',stars));
- let distance='';const summary=node('small',b.address||b.mode||b.city);
+ const summary=node('small',b.address||b.mode||b.city);
  const info=button('',()=>{
   const entries=[b.description,b.mode,b.address,b.city].filter(Boolean).map(s=>node('p',s));
   if(phone){const a=node('a',phone);a.href='tel:'+phone.replace(/[^0-9+]/g,'');entries.push(a);}
   for(const [idx,time] of Object.entries(b.hours||{}))entries.push(node('p',days[idx]+' · '+time.join(' – ')));
-  if(b.latitude!=null&&b.longitude!=null){
-   const msg=node('p',distance);const locate=button('Calcular mi distancia',()=>{if(!navigator.geolocation){msg.textContent='La ubicación no está disponible en este navegador.';return;}msg.textContent='Buscando tu ubicación…';navigator.geolocation.getCurrentPosition(({coords})=>{const rad=n=>n*Math.PI/180;const h=Math.sin(rad(b.latitude-coords.latitude)/2)**2+Math.cos(rad(coords.latitude))*Math.cos(rad(b.latitude))*Math.sin(rad(b.longitude-coords.longitude)/2)**2;const km=12742*Math.asin(Math.min(1,Math.sqrt(h)));distance='A '+km.toLocaleString('es-DO',{maximumFractionDigits:1})+' km en línea recta';msg.textContent=distance;summary.textContent=[b.address||b.city,distance].filter(Boolean).join(' · ');},()=>{msg.textContent='Puedes consultar la dirección y reservar aunque no compartas tu ubicación.';},{timeout:12000,maximumAge:60000});},'more');entries.push(locate,msg);
-  }
   modal('Información',entries);
  });info.append(node('strong','Información'),summary);if(phone)info.append(node('small',phone));facts.append(reviews,info);root.append(facts);updateFooter();
 }
