@@ -52,3 +52,14 @@ html:has(#bienvenida[open]) { overflow:hidden }
 }
 .catalog-card details a {color:inherit;text-underline-offset:3px}
 .profile-link{display:inline-block;font-weight:700;margin-block:9px;padding:8px 14px;color:white;background:#171717;border-radius:7px;text-decoration:none}
+
+  .reserva-dock{position:fixed;z-index:20;bottom:max(10px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(calc(100% - 32px),450px);display:flex;padding:3px;background:rgba(235,235,234,.95);border:1px solid #fff;box-shadow:0 2px 14px #0002;border-radius:40px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .reserva-dock a{flex:1;border-radius:36px;min-height:44px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;color:#141414;text-decoration:none;font:500 12px/1.15 'DM Sans',sans-serif}
+  .reserva-dock a[aria-current=page]{background:#d8d8d7;font-weight:700}
+  .reserva-dock svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  #dock-home[aria-current=page] svg{fill:currentColor}
+.independent-directory main {padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+.independent-directory #buscar[hidden] {display:none}
+.independent-directory #language {border:1px solid #ccc;border-radius:50%;width:44px;height:44px;padding:0;background:white;color:#171717;font-family:inherit;font-size:13px;font-weight:600}
+.independent-directory .links {display:flex;align-items:center;gap:8px}
+.independent-directory .reserva-dock {box-sizing:border-box}
