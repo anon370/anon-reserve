@@ -37,9 +37,7 @@ function render(b){
  const stars=b.rating_count?('★ '+Number(b.rating_average).toFixed(1)+' · '+b.rating_count+' reseñas'):'Sin reseñas todavía';
  desc.append(node('p',stars,'rating'));title.append(desc);root.append(title);
  const head=node('div',null,'section-head');
- if(!pro || plans.length){
-   head.append(button('Membresías ›',()=>modal('Membresías',plans.length?itemList(plans):[node('p','Todavía no hay membresías publicadas.')]),'pill'));
- }
+
  root.append(head);
  const serviceGrid=node('div',null,'grid');const servicePanel=node('section');servicePanel.append(serviceGrid);root.append(servicePanel);let selected=services.find(s=>s.id===q.get('servicio'))||services[0];
  function showAction(){
@@ -60,7 +58,6 @@ function render(b){
  }
  cards();if(!services.length && !products.length && !drinks.length)servicePanel.append(node('p','Este perfil todavía no tiene servicios disponibles.','sub'));
  if(services.length>4){const more=button(expanded?'Mostrar menos':'Ver todos los servicios',()=>{expanded=!expanded;cards();more.textContent=expanded?'Mostrar menos':'Ver todos los servicios';},'more');servicePanel.append(more);}
- const promo=node('div',null,'grid promo-grid');
  const catalog=[...products,...drinks];
  const productPanel=node('section');
  root.append(productPanel);
@@ -147,14 +144,21 @@ function render(b){
    productPanel.append(node('p','Todavía no hay productos publicados.','sub'));
  }
  switchMode(productMode);
- if(offers.length>1){const sample=offers[1],tile=button('',()=>modal('Oferta',itemList([sample])),'tile');const v=node('span',null,'tile-text');v.append(node('strong',sample.name),node('small',sample.description||'Ver promoción'));tile.append(v);promo.append(tile);}
- if(promo.childElementCount)root.append(promo);
- if(offers.length){const coupon=button('',()=>modal('Ofertas',itemList(offers)),'coupon');const copy=node('span');copy.append(node('small','Ofertas'),node('strong',offers[0].name));coupon.append(copy,node('b','Ver ofertas →'));root.append(coupon);}
- if(!offers.length && !pro){
-   const emptyOffers=button('',()=>modal('Ofertas',[node('p','Todavía no hay ofertas publicadas.')]),'coupon');
-   emptyOffers.append(node('strong','Ofertas'),node('b','Ver ofertas →'));
-   root.append(emptyOffers);
+ const sections=node('div',null,'catalog-sections');
+ function section(label,items,empty,icon){
+   if(pro && !items.length)return;
+   const row=button('',()=>modal(label,items.length?itemList(items):[node('p',empty)]),'catalog-row');
+   const mark=node('span',null,'catalog-icon '+icon);
+   mark.setAttribute('aria-hidden','true');
+   const copy=node('span',null,'catalog-copy');
+   copy.append(node('strong',label),node('small',items[0]?.name || items[0]?.title || empty));
+   const arrow=node('span','›','catalog-arrow');
+   arrow.setAttribute('aria-hidden','true');
+   row.append(mark,copy,arrow);sections.append(row);
  }
+ section('Ofertas',offers,'Aún no hay ofertas','offer-tag');
+ section('Membresías',plans,'Aún no hay membresías','member-card');
+ if(sections.childElementCount)root.append(sections);
  const facts=node('div',null,'facts');const reviews=button('',()=>{const lines=[node('p',stars)];for(let i=5;i>=1;i--)if(b.review_stars?.[i])lines.push(node('p',i+' ★ · '+b.review_stars[i]));modal('Reseñas',lines);});
  reviews.append(node('strong','Reseñas'),node('small',stars));
  let distance='';const summary=node('small',b.address||b.mode||b.city);
