@@ -61,7 +61,7 @@ function render(b){
  const catalog=[...products,...drinks];
  const productPanel=node('section');
  root.append(productPanel);
- let productMode=!services.length && catalog.length>0;
+ let productMode=!services.length && (!pro || catalog.length>0);
  const basket=new Map();
  const tabs=node('div',null,'store-tabs');
  head.prepend(tabs);
@@ -98,7 +98,7 @@ function render(b){
    tab.dataset.mode=mode;tabs.append(tab);
  }
  if(services.length)addTab('Servicios','services');
- if(catalog.length)addTab('Productos','products');
+ if(!pro || catalog.length)addTab('Productos','products');
  const filters=node('div',null,'store-filters'),grid=node('div',null,'grid');
  productPanel.append(filters,grid);
  function openProduct(item){
@@ -138,6 +138,10 @@ function render(b){
      const control=button(label||'Todos',()=>drawProducts(label),'pill');control.dataset.category=label;filters.append(control);
    }
    filters.hidden=categories.size===1 && categories.has('General');drawProducts('');
+ }
+ if(!catalog.length && !pro){
+   filters.hidden=true;
+   productPanel.append(node('p','Todavía no hay productos publicados.','sub'));
  }
  switchMode(productMode);
  if(offers.length>1){const sample=offers[1],tile=button('',()=>modal('Oferta',itemList([sample])),'tile');const v=node('span',null,'tile-text');v.append(node('strong',sample.name),node('small',sample.description||'Ver promoción'));tile.append(v);promo.append(tile);}
