@@ -35,6 +35,9 @@ function render(b){
  const title=node('div',null,'identity'),desc=node('div');const portrait=img(b.profile_photo||b.photo);if(portrait){portrait.className='store-cover';}title.classList.add('store-identity');
  desc.append(node('h1',b.name));if(portrait)desc.append(portrait);desc.append(node('p',[pro?(b.title||'Profesional independiente'):(labels[b.category]||b.category),b.city].filter(Boolean).join(' · ')));
  const stars=b.rating_count?('★ '+Number(b.rating_average).toFixed(1)+' · '+b.rating_count+' reseñas'):'Sin reseñas todavía';
+ if(b.address) desc.append(node('p',b.address));
+ const directions=window.businessDirections(b);
+ if(directions) desc.append(directions);
  desc.append(node('p',stars,'rating'));title.append(desc);root.append(title);
  const head=node('div',null,'section-head');
 

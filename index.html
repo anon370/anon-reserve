@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-EWbrkJcjxchTAxg4QkgOX8iJbb3iBQGERCqGmGgbOSY='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-eObhtjdfAe22dNjpjZvdQEsM76BprHpHWHcLWeFVvm8=' 'sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -101,6 +101,8 @@ dialog { border-radius: 27px; }
     #filters label { display: grid; gap: 4px; flex: 1 1 145px; font-size: 12px; font-weight: 600; color: #515151; }
     #filters .search-field { flex: 2 1 200px; }
     #filters input, #filters select { border: 1px solid #ccc; background: #fff; color: #171717; border-radius: 10px; font-weight: 400; font-size: 16px; width: 100%; height: 44px; padding: 0 10px; }
+    #activate-location { border:1px solid #171717; border-radius:10px; background:white; color:#171717; min-height:44px; padding:4px 6px; font:inherit; font-size:clamp(12px,3.2vw,15px); }
+    #location-status {grid-column:1/-1;flex-basis:100%}
     #filters input { appearance: none; }
     #categories { display: flex; flex-wrap: wrap; gap: 8px; }
     #categories button { flex-shrink: 0; min-height: 40px; }
@@ -121,7 +123,7 @@ dialog { border-radius: 27px; }
       #filters { display: grid; grid-template-columns: minmax(10.8rem,1.16fr) minmax(0,1fr); gap: 10px; padding: 12px 8px; }
       #filters label { min-width:0 }
       #filters select { font-size:clamp(.875rem,3.55vw,1rem); min-width:0; padding-inline:3px }
-      #filters .search-field { grid-column: 1/-1; }
+      #filters .search-field { grid-column: 1; }
       .hero-copy { padding: 25px; }
       .header-actions { gap: 9px; }
       .owner-link { font-size: 12px; }
@@ -169,6 +171,8 @@ dialog { border-radius: 27px; }
       <label><span data-i18n="country">País</span><span class="picker"><select id="country"><option value="DO" data-i18n="DO">República Dominicana</option></select><span class="picker-output" aria-hidden="true"></span></span></label>
       <label><span data-i18n="city">Ciudad</span><span class="picker"><select id="city"></select><span class="picker-output" aria-hidden="true"></span></span></label>
       <label class="search-field"><span data-i18n="search">Buscar</span><input type="search" id="query" placeholder="Nombre o categoría" autocomplete="off"></label>
+      <button type="button" id="activate-location"><b aria-hidden="true">➤</b> <span>Activar mi ubicación</span></button>
+      <small id="location-status" role="status" hidden></small>
     </form>
     <div class="category-tools"><strong data-i18n="categories">Categorías</strong>
       <details><summary data-i18n="allCategories">Ver todas</summary><select id="all-categories" aria-label="Todas las categorías"></select></details></div>
@@ -189,6 +193,7 @@ dialog { border-radius: 27px; }
   </main>
   <footer>ANON TECH LABS</footer>
   <noscript>Activa JavaScript para ver los negocios publicados.</noscript>
+  <script src="./distancia.js" integrity="sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk="></script>
   <script>'use strict';
 
 const el = id => document.getElementById(id);
@@ -441,6 +446,8 @@ function drawResults() {
       const address=row.address.trim(), city=row.city.trim();
       const location=address && city && !normalize(address).includes(normalize(city)) ? address+', '+city : address || city;
       if (location) card.append(cardLine('location',location));
+      const directions = window.businessDirections(row, Boolean(language), true);
+      if (directions) card.append(directions);
       const count=Number(row.rating_count) || 0;
       const reviewWord=language ? (count===1?'review':'reviews') : (count===1?'reseña':'reseñas');
       const reviews=count>0 ? publicRating(row).toFixed(1)+' · '+count+' '+reviewWord : (language?'No reviews yet':'Sin reseñas aún');
