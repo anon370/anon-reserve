@@ -76,16 +76,22 @@ function render(b){
    if(!productMode){showAction();return;}
    foot.replaceChildren();foot.hidden=!basket.size;
    if(!basket.size)return;
-   let units=0;
+   let totalCents=0;
+   let allPriced=true;
    const lines=[];
    for(const [item,quantity] of basket){
-     units+=quantity;
+     const priced=item.price!=null && item.price!=='' && Number.isFinite(Number(item.price));
+     const cents=priced?Math.round(Number(item.price)*100)*quantity:0;
+     if(priced)totalCents+=cents;
+     else allPriced=false;
      const line=node('article');
-     line.append(node('strong',quantity+' × '+item.name),node('p',money(item.price==null?null:Number(item.price)*quantity)));
+     line.append(node('strong',quantity+' × '+item.name),node('p',priced?money(cents/100):"Precio por consultar"));
      line.append(button('Quitar',()=>{basket.delete(item);updateFooter();document.querySelector('#details').close();},'pill'));
      lines.push(line);
    }
-   foot.append(node('strong',units+(units===1?' artículo':' artículos')),button('Ver mi pedido',()=>modal('Mi pedido',lines),'cta'));
+   const total=allPriced?money(totalCents/100):'Total por confirmar';
+   lines.push(node('strong','Total · '+total));
+   foot.append(button('Ver pedido · '+total,()=>modal('Mi pedido',lines),'cta product-order'));
  }
  function addTab(label,mode){
    const tab=button(label,()=>switchMode(mode==='products'));
@@ -111,9 +117,19 @@ function render(b){
    for(const control of filters.children)control.setAttribute('aria-pressed',String(control.dataset.category===category));
    for(const item of catalog){
      if(category && (item.category||'General')!==category)continue;
-     const tile=button('',()=>openProduct(item),'tile'),photo=img(item.photo),body=node('span',null,'tile-text');
-     if(photo)tile.append(photo);
-     body.append(node('strong',item.name),node('small',money(item.price)));tile.append(body);grid.append(tile);
+     const tile=node('article',null,'tile product-card');
+     const detail=button('',()=>openProduct(item),'product-preview');
+     const photo=img(item.photo);
+     if(photo)detail.append(photo);
+     const body=node('span',null,'tile-text');
+     body.append(node('strong',item.name),node('small',money(item.price)+(item.unit?' / '+item.unit:'')));
+     detail.append(body);
+     const add=button('+',()=>{
+       basket.set(item,(basket.get(item)||0)+1);
+       updateFooter();
+     },'product-add');
+     add.setAttribute('aria-label','Agregar '+item.name+' al pedido');
+     tile.append(detail,add);grid.append(tile);
    }
  }
  if(catalog.length){
