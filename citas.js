@@ -223,7 +223,7 @@ async function openBooking() {
   view('booking', 'Reservar una cita');
   el('booking-section').hidden = true;
   business = await api('catalog/' + encodeURIComponent(businessId) + '/');
-  if (business.country !== 'DO') throw Error('Este negocio no está en el catálogo dominicano.');
+  if (!['DO','US'].includes(business.country)) throw Error('Este negocio está fuera de los países disponibles.');
   const serviceSelect = el('servicio');
   options(serviceSelect, business.services);
   const requested = route.get('servicio');

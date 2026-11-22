@@ -15,8 +15,8 @@ async function load(){
  if(!id)throw Error('Elige una ficha desde el directorio.');
  if(!pro){
    const b=await read('catalog/'+encodeURIComponent(id)+'/');
-   if(b.country!=='DO')throw Error('Esta ficha está fuera del catálogo dominicano.');
-   if(!b.listing){const all=await read('catalog/?country=DO');Object.assign(b,all.businesses.find(x=>x.id===b.id)||{});}
+   if(!['DO','US'].includes(b.country))throw Error('Esta ficha está fuera de los países disponibles.');
+   if(!b.listing){const all=await read('catalog/?country='+b.country);Object.assign(b,all.businesses.find(x=>x.id===b.id)||{});}
    return b;
  }
  try{return await read('independents/'+encodeURIComponent(pro)+'/profile/');}catch(error){
@@ -29,6 +29,12 @@ async function load(){
 const labels={barberia:'Barbería',salon:'Salón',mixto:'Barbería y salón',cafeteria:'Cafetería',bar_restaurante:'Bar y restaurante',bar:'Bar',restaurante:'Restaurante',suplidora:'Suplidora',otro:'Negocio'};
 function render(b){
  document.title=b.name+' · ANON Reserva';root.replaceChildren();if(pro)document.querySelector('#back').href='./independientes.html';
+ if(!pro && b.country==='US'){
+   const back=new URLSearchParams({vista:'catalogo',country:'US'});
+   if(['FL','NY'].includes(q.get('state')))back.set('state',q.get('state'));
+   if(q.get('city'))back.set('city',q.get('city'));
+   document.querySelector('#back').href='./?'+back;
+ }
  const offers=list(pro?b.offers:b.listing?.offers),plans=list(pro?b.plans:b.listing?.plans);
  const drinks=list(b.listing?.drinks),products=list(b.products),services=list(b.services);
  const phone=pro?b.phone:b.listing?.phone;
