@@ -32,8 +32,8 @@ function render(b){
  const offers=list(pro?b.offers:b.listing?.offers),plans=list(pro?b.plans:b.listing?.plans);
  const drinks=list(b.listing?.drinks),products=list(b.products),services=list(b.services);
  const phone=pro?b.phone:b.listing?.phone;
- const title=node('div',null,'identity'),desc=node('div');const portrait=img(b.profile_photo||b.photo);if(portrait){portrait.className='store-cover';title.append(portrait);}title.classList.add('store-identity');
- desc.append(node('h1',b.name),node('p',[pro?(b.title||'Profesional independiente'):(labels[b.category]||b.category),b.city].filter(Boolean).join(' · ')));
+ const title=node('div',null,'identity'),desc=node('div');const portrait=img(b.profile_photo||b.photo);if(portrait){portrait.className='store-cover';}title.classList.add('store-identity');
+ desc.append(node('h1',b.name));if(portrait)desc.append(portrait);desc.append(node('p',[pro?(b.title||'Profesional independiente'):(labels[b.category]||b.category),b.city].filter(Boolean).join(' · ')));
  const stars=b.rating_count?('★ '+Number(b.rating_average).toFixed(1)+' · '+b.rating_count+' reseñas'):'Sin reseñas todavía';
  desc.append(node('p',stars,'rating'));title.append(desc);root.append(title);
  const head=node('div',null,'section-head');
