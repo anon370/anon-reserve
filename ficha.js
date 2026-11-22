@@ -37,7 +37,10 @@ function render(b){
  const stars=b.rating_count?('★ '+Number(b.rating_average).toFixed(1)+' · '+b.rating_count+' reseñas'):'Sin reseñas todavía';
  desc.append(node('p',stars,'rating'));title.append(desc);root.append(title);
  const head=node('div',null,'section-head');
- if(plans.length)head.append(button('Membresía ›',()=>modal('Membresías',itemList(plans)),'pill'));root.append(head);
+ if(!pro || plans.length){
+   head.append(button('Membresías ›',()=>modal('Membresías',plans.length?itemList(plans):[node('p','Todavía no hay membresías publicadas.')]),'pill'));
+ }
+ root.append(head);
  const serviceGrid=node('div',null,'grid');const servicePanel=node('section');servicePanel.append(serviceGrid);root.append(servicePanel);let selected=services.find(s=>s.id===q.get('servicio'))||services[0];
  function showAction(){
   foot.replaceChildren();foot.hidden=!selected;if(!selected)return;
@@ -147,6 +150,11 @@ function render(b){
  if(offers.length>1){const sample=offers[1],tile=button('',()=>modal('Oferta',itemList([sample])),'tile');const v=node('span',null,'tile-text');v.append(node('strong',sample.name),node('small',sample.description||'Ver promoción'));tile.append(v);promo.append(tile);}
  if(promo.childElementCount)root.append(promo);
  if(offers.length){const coupon=button('',()=>modal('Ofertas',itemList(offers)),'coupon');const copy=node('span');copy.append(node('small','Ofertas'),node('strong',offers[0].name));coupon.append(copy,node('b','Ver ofertas →'));root.append(coupon);}
+ if(!offers.length && !pro){
+   const emptyOffers=button('',()=>modal('Ofertas',[node('p','Todavía no hay ofertas publicadas.')]),'coupon');
+   emptyOffers.append(node('strong','Ofertas'),node('b','Ver ofertas →'));
+   root.append(emptyOffers);
+ }
  const facts=node('div',null,'facts');const reviews=button('',()=>{const lines=[node('p',stars)];for(let i=5;i>=1;i--)if(b.review_stars?.[i])lines.push(node('p',i+' ★ · '+b.review_stars[i]));modal('Reseñas',lines);});
  reviews.append(node('strong','Reseñas'),node('small',stars));
  let distance='';const summary=node('small',b.address||b.mode||b.city);
