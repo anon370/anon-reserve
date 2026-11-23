@@ -39,9 +39,42 @@ function view(name, title) {
   el('receipt').hidden = name !== 'receipt';
 }
 
+function showBookings(target) {
+  el('all-bookings').open = true;
+  target.tabIndex = -1;
+  target.focus();
+  target.scrollIntoView({block: 'center'});
+}
+
+el('show-bookings').onclick = () => showBookings(el('all-bookings').querySelector('summary'));
+
+function renderUpcoming(bookings) {
+  const box = el('next-booking');
+  const index = bookings.findIndex(b => ['pending', 'confirmed'].includes(b.status) && Date.parse(b.start) >= Date.now());
+  if (index < 0) {
+    box.textContent = 'No tienes próximas citas.';
+    return;
+  }
+  const b = bookings[index];
+  const format = options => new Intl.DateTimeFormat('es', {timeZone: b.timezone, ...options}).format(new Date(b.start));
+  const date = node('div');
+  date.className = 'profile-date';
+  date.append(node('small', format({month: 'short'})), node('strong', format({day: 'numeric'})));
+  const info = node('div');
+  info.append(node('strong', b.service), node('div', b.business),
+    node('div', format({hour: 'numeric', minute: '2-digit', hour12: true}) + ' · ' + b.resource));
+  const status = node('span', b.status === 'pending' ? 'Pendiente' : 'Confirmada');
+  status.className = 'profile-status';
+  const details = node('button', 'Ver detalles →');
+  details.type = 'button';
+  details.onclick = () => showBookings(el('citas').children[index]);
+  box.replaceChildren(date, info, status, details);
+}
+
 async function appointments() {
   const {bookings} = await api('bookings/?scope=client');
   bookingList(el('citas'), bookings, false, appointments);
+  renderUpcoming(bookings);
   const reviews = el('valoraciones');
   reviews.replaceChildren();
   const businesses = new Set();
@@ -59,17 +92,22 @@ function profile(session) {
   view('profile', 'Mi perfil');
   configurarAvisos(api);
   el('profile-name').textContent = session.user.name;
+  el('profile-initial').textContent = [...session.user.name.trim()][0]?.toUpperCase() || '';
+  el('profile-logout').append(el('salir'));
+  new MutationObserver(() => {
+    const count = parseInt(el('avisos').firstElementChild?.textContent, 10);
+    el('unread-count').textContent = count > 0 ? String(count) : '';
+  }).observe(el('avisos'), {childList: true});
   el('profile-email').textContent = session.user.email;
   el('profile-phone').textContent = session.user.phone || '';
   const actions = el('manage-profiles');
   actions.replaceChildren();
   function link(text, href) {
-    const p = node('p'), a = node('a', text);
+    const a = node('a', text);
+    a.className = 'profile-row';
     a.href = href;
-    p.append(a);
-    actions.append(p);
+    actions.append(a);
   }
-  link('Mis solicitudes de servicios', './independientes.html?vista=solicitudes');
   const owned = (session.workspaces || []).filter(w => w.role === 'owner');
   if (session.independent || owned.length) {
     const suffix = session.independent ? '' : encodeURIComponent(owned[0].id) + '/';
@@ -78,9 +116,7 @@ function profile(session) {
       for (const item of owned) link('Editar ficha · ' + item.name, './editar-ficha.html?negocio=' + encodeURIComponent(item.id));
     }).catch(() => {});
   }
-  link('Mi trabajo y mis ingresos','https://whale-app-ebihq.ondigitalocean.app/equipo.html');
-  const purchaseBox=node('section');
-  purchaseBox.append(node('h2','Compras y transacciones'));actions.append(purchaseBox);
+  const purchaseBox = el('profile-purchases');
   api('purchases/').then(({purchases})=>{
     purchaseBox.append(node('p','Sin pagos realizados en la plataforma.'));
     for(const p of purchases)purchaseBox.append(node('p',p.business__name+' · '+p.name+' · '+p.currency+' '+p.amount+' · Pendiente de pago'));

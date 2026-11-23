@@ -9,7 +9,7 @@
   <title>Mi cuenta · ANON Reserva</title>
   <link rel="stylesheet" crossorigin="anonymous" href="https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.css">
   <link rel="stylesheet" href="./reserva.css">
-  <link rel="stylesheet" href="./citas.css">
+  <link rel="stylesheet" href="./citas.css?diseno=perfil">
 <link rel="manifest" href="./reserva.webmanifest"></head>
 <body data-view="loading">
   <header class="booking-header">
@@ -29,7 +29,11 @@
       </button>
     </template>
     <div id="contenido" hidden>
-      <section id="customer-profile" hidden><h2>Datos de mi cuenta</h2><p id="profile-name"></p><p id="profile-email"></p><p id="profile-phone"></p><div id="manage-profiles"></div></section>
+      <div id="customer-profile" hidden>
+        <div class="profile-id"><span id="profile-initial" aria-hidden="true"></span><strong id="profile-name"></strong></div>
+        <div class="profile-heading"><h2>Próxima cita</h2><button type="button" id="show-bookings">Mis reservas →</button></div>
+        <div id="next-booking" aria-live="polite">Cargando citas…</div>
+      </div>
       <section id="booking-section" hidden aria-labelledby="page-title">
         <form id="reservar">
           <div class="service-card">
@@ -54,11 +58,19 @@
       </section>
       <div id="receipt" hidden><p id="receipt-detail"></p><a href="./citas.html?vista=perfil">Ver mis reservas</a></div>
       <div id="history" hidden>
-        <section><h2>Mis reservas</h2><button id="actualizar" class="sec">Actualizar citas</button><div id="citas"></div><div id="valoraciones"></div></section>
-        <section aria-labelledby="titulo-avisos"><h2 id="titulo-avisos">Notificaciones</h2><button type="button" id="activar-avisos">Activar notificaciones en mi teléfono</button><p id="estado-avisos" role="status"></p><div id="avisos"></div></section>
+        <details id="all-bookings"><summary>Mis reservas</summary><button id="actualizar" class="sec">Actualizar citas</button><div id="citas"></div><div id="valoraciones"></div></details>
+        <h2>Mi cuenta</h2>
+        <details><summary><svg class="profile-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9a8 8 0 0 1 16 0"/></svg>Datos personales</summary><p id="profile-email"></p><p id="profile-phone"></p></details>
+        <details><summary><svg class="profile-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 17h16l-2-3V9a6 6 0 0 0-12 0v5Zm6 3a2 2 0 0 0 4 0"/></svg>Notificaciones <span id="unread-count"></span></summary><button type="button" id="activar-avisos">Activar notificaciones en mi teléfono</button><p id="estado-avisos" role="status"></p><div id="avisos"></div></details>
+        <a class="profile-row" href="./independientes.html?vista=solicitudes"><svg class="profile-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>Mis solicitudes de servicios</a>
+        <details><summary><svg class="profile-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M2 5h20v14H2z M2 10h20"/></svg>Compras y transacciones</summary><div id="profile-purchases"></div></details>
+        <a class="profile-row" href="https://whale-app-ebihq.ondigitalocean.app/equipo.html"><svg class="profile-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M2 8h20v13H2z M8 8V4h8v4 M2 13h20"/></svg>Mi trabajo y mis ingresos</a>
+        <div id="manage-profiles"></div>
+        <div id="profile-logout"></div>
+        <nav class="reserva-dock" aria-label="Navegación principal"><a href="./?vista=catalogo"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 10.2 12 3l9 7.2v10.3h-6.3V14H9.3v6.5H3Z"/></svg><span>Inicio</span></a><a href="./?vista=catalogo#buscar"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.4" cy="10.4" r="7.4"/><path d="m16 16 5 5"/></svg><span>Buscar</span></a><a aria-current="page" href="./citas.html?vista=perfil"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><circle cx="12" cy="9" r="3"/><path d="M5.3 18c1.8-5 11.6-5 13.4 0"/></svg><span>Mi perfil</span></a></nav>
       </div>
     </div>
   </main>
-  <script type="module" src="./citas.js?diseno=a"></script>
+  <script type="module" src="./citas.js?diseno=perfil"></script>
 </body>
 </html>

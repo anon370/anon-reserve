@@ -97,3 +97,35 @@ body[data-view="booking"] main { padding-bottom: calc(98px + env(safe-area-inset
 #barber-choice input:checked + span { outline: 2px solid #161616; outline-offset: 2px; }
 #barber-choice input:checked + span::after { content: '✓'; position: absolute; top: -3px; right: -3px; border-radius: 50%; background: black; color: white; width: 20px; }
 #barber-choice input:focus-visible + span { outline: 3px dashed #151515; outline-offset: 3px; }
+
+body[data-view="profile"] { background: white; }
+body[data-view="profile"] main { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+body[data-view="profile"] #sesion { display: none; }
+.profile-id, .profile-heading { display: flex; align-items: center; gap: 14px; }
+.profile-id { border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+#profile-initial { background: var(--ink); color: white; border-radius: 50%; width: 46px; height: 46px; display: grid; place-items: center; font-size: 22px; }
+.profile-heading { justify-content: space-between; margin-top: 20px; }
+#customer-profile button, #profile-logout button { color: var(--ink); background: transparent; border: 0; padding: 8px 0; min-height: 44px; }
+#next-booking { border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 10px; align-items: start; overflow-wrap: anywhere; }
+.profile-date { border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; text-align: center; }
+.profile-date small, .profile-date strong { display: block; text-transform: uppercase; }
+.profile-date strong { font-size: 24px; }
+.profile-status, #unread-count:not(:empty) { font-size: .78rem; padding: 2px 7px; border: 1px solid var(--border); border-radius: 14px; }
+#next-booking button { grid-column: 1/-1; text-align: left; border-top: 1px solid var(--border); border-radius: 0; }
+#history { margin-top: 16px; }
+#history > h2 { margin: 22px 0 8px; }
+#history details, #history .profile-row, #profile-logout { border-bottom: 1px solid var(--border); }
+#history summary, #history .profile-row, #profile-logout button { display: flex; align-items: center; gap: 8px; min-height: 48px; cursor: pointer; color: var(--ink); text-decoration: none; }
+#history summary::-webkit-details-marker { display: none; }
+#history summary::after, #history .profile-row::after { content: '›'; margin-left: auto; }
+#history details[open] > summary::after { transform: rotate(90deg); }
+#history > #all-bookings:not([open]) { display: none; }
+#history .reserva-dock { display: flex; justify-content: space-around; }
+#history .reserva-dock svg { width: 20px; height: 20px; fill: none; stroke: currentColor; }
+@media (max-width: 380px) {
+  #next-booking { grid-template-columns: auto minmax(0,1fr); }
+  .profile-status { grid-column: 2; justify-self: start; }
+}
+.profile-icon { width: 21px; height: 21px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+#profile-logout button { width: 100%; }
+#profile-logout button::before { content: '↪'; width: 21px; font-size: 21px; }
