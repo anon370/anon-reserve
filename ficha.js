@@ -10,7 +10,7 @@ function img(src){if(typeof src!=='string'||!(/^(https:\/\/|data:image\/jpeg;bas
 async function read(path){const r=await fetch(base+path,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Object.assign(Error('No se pudo abrir esta ficha.'),{status:r.status});return r.json();}
 function modal(title,content){document.querySelector('#dialog-title').textContent=title;document.querySelector('#detail-body').replaceChildren(...content);document.querySelector('#details').showModal();}
 document.querySelector('#dismiss').onclick=()=>document.querySelector('#details').close();
-function itemList(rows){return rows.map(row=>{const a=node('article');a.append(node('strong',row.name||row.title));for(const t of [row.price!=null?money(row.price):'',row.description,row.validity,row.end?'Hasta '+row.end:'',row.uses?row.uses+' visitas':''])if(t)a.append(node('p',t));return a;});}
+function itemList(rows,country){const format=country==='US'?value=>'US$'+Number(value).toLocaleString('es-US',{maximumFractionDigits:2}):money;return rows.map(row=>{const a=node('article');a.append(node('strong',row.name||row.title));for(const t of [row.price!=null?format(row.price):'',row.description,row.validity,row.end?'Hasta '+row.end:'',row.uses?row.uses+' visitas':'',...(row.services||[]),...(row.extras||[]),row.regular!=null?'Valor regular '+format(row.regular):'',row.discount!=null?'Ahorras '+format(row.discount):''])if(t)a.append(node('p',t));return a;});}
 async function load(){
  if(!id)throw Error('Elige una ficha desde el directorio.');
  if(!pro){
@@ -156,7 +156,7 @@ function render(b){
  const sections=node('div',null,'catalog-sections');
  function section(label,items,empty,icon){
    if(pro && !items.length)return;
-   const row=button('',()=>modal(label,items.length?itemList(items):[node('p',empty)]),'catalog-row');
+   const row=button('',()=>modal(label,items.length?itemList(items,b.country):[node('p',empty)]),'catalog-row');
    const mark=node('span',null,'catalog-icon '+icon);
    mark.setAttribute('aria-hidden','true');
    const copy=node('span',null,'catalog-copy');
