@@ -1,0 +1,11 @@
+{
+  "id": "/",
+  "name": "ANON Reserva",
+  "short_name": "ANON Reserva",
+  "start_url": "./citas.html?vista=perfil",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f7f7",
+  "theme_color": "#f7f7f7",
+  "icons": [{"src":"./anon-marca.svg","sizes":"any","type":"image/svg+xml"}]
+}

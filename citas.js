@@ -1,3 +1,4 @@
+import {configurarAvisos} from './avisos-cliente.js';
 import {ratingForm} from './valoraciones.js';
 import {categoryPhoto, money} from './servicio-visual.js';
 import {api, el, identity, localDay, notice, options, node, listen, bookingList, loadNotices} from 'https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.js';
@@ -56,6 +57,7 @@ listen(el('actualizar'), 'click', appointments);
 
 function profile(session) {
   view('profile', 'Mi perfil');
+  configurarAvisos(api);
   el('profile-name').textContent = session.user.name;
   el('profile-email').textContent = session.user.email;
   el('profile-phone').textContent = session.user.phone || '';

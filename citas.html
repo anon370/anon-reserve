@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f7f7f7">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://octopus-app-wmb69.ondigitalocean.app; style-src 'self' https://octopus-app-wmb69.ondigitalocean.app; img-src 'self' data: https:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'self' https://octopus-app-wmb69.ondigitalocean.app; style-src 'self' https://octopus-app-wmb69.ondigitalocean.app; img-src 'self' data: https:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <title>Mi cuenta · ANON Reserva</title>
   <link rel="stylesheet" crossorigin="anonymous" href="https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.css">
   <link rel="stylesheet" href="./reserva.css">
   <link rel="stylesheet" href="./citas.css">
-</head>
+<link rel="manifest" href="./reserva.webmanifest"></head>
 <body data-view="loading">
   <header class="booking-header">
     <div class="topbar">
@@ -55,7 +55,7 @@
       <div id="receipt" hidden><p id="receipt-detail"></p><a href="./citas.html?vista=perfil">Ver mis reservas</a></div>
       <div id="history" hidden>
         <section><h2>Mis reservas</h2><button id="actualizar" class="sec">Actualizar citas</button><div id="citas"></div><div id="valoraciones"></div></section>
-        <section aria-labelledby="titulo-avisos"><h2 id="titulo-avisos">Notificaciones</h2><div id="avisos"></div></section>
+        <section aria-labelledby="titulo-avisos"><h2 id="titulo-avisos">Notificaciones</h2><button type="button" id="activar-avisos">Activar notificaciones en mi teléfono</button><p id="estado-avisos" role="status"></p><div id="avisos"></div></section>
       </div>
     </div>
   </main>
