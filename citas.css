@@ -86,3 +86,14 @@ body[data-view="booking"] main { padding-bottom: calc(98px + env(safe-area-inset
 #cuenta label[for="clave"] { margin-bottom: 8px; }
 .password-field { margin-bottom: 7px; }
 #cuenta form h1 { margin-bottom: 8px; }
+
+.resource-row[hidden] { display: none; }
+#barber-choice { border: 0; margin: 18px 0; padding: 4px; display: flex; overflow-x: auto; gap: 16px; min-width: 0; }
+#barber-choice legend { font-weight: 700; margin-bottom: 8px; }
+#barber-choice label { position: relative; display: grid; justify-items: center; flex: 0 0 76px; gap: 5px; cursor: pointer; text-align: center; overflow-wrap: anywhere; }
+#barber-choice input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.barber-portrait { position: relative; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: #eee; color: #333; font-weight: 700; }
+.barber-portrait img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+#barber-choice input:checked + span { outline: 2px solid #161616; outline-offset: 2px; }
+#barber-choice input:checked + span::after { content: '✓'; position: absolute; top: -3px; right: -3px; border-radius: 50%; background: black; color: white; width: 20px; }
+#barber-choice input:focus-visible + span { outline: 3px dashed #151515; outline-offset: 3px; }

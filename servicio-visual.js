@@ -18,7 +18,7 @@ export function categoryPhoto(service = '', category = '') {
   return photo;
 }
 
-export function money(value) {
+export function money(value, country = "DO") {
   if (value == null || value === '') return 'A convenir';
-  return 'RD$' + Number(value).toLocaleString('es-DO', {maximumFractionDigits: 2});
+  return (country === 'US' ? 'US$' : 'RD$') + Number(value).toLocaleString('es-DO', {maximumFractionDigits: 2});
 }

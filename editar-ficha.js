@@ -18,12 +18,12 @@ function uploader(parent,label,initial=''){const wrap=make('div'),image=make('im
  input.onchange=async()=>{if(!input.files[0])return;working++;try{value=await compress(input.files[0]);display();}catch(e){notice('No se pudo preparar la foto. Usa una imagen JPEG o PNG más pequeña.');}finally{working--;input.value='';}};
  const clear=action('Quitar foto',()=>{value='';display();});l.append(input);wrap.append(l,image,clear);parent.append(wrap);display();return ()=>value;
 }
-function promotions(parent,rows,kind){const offer=kind==="offers",menu=kind==="menu";const readers=new Map();function add(row={}){const line=make('article');const name=field(line,'Nombre',row.name,'text',100),desc=field(line,'Detalle',row.description,'text',400);name.required=true;
+function promotions(parent,rows,kind,country='DO'){const offer=kind==="offers",menu=kind==="menu";const readers=new Map();function add(row={}){const line=make('article');const name=field(line,'Nombre',row.name,'text',100),desc=field(line,'Detalle',row.description,'text',400);name.required=true;
  const category=menu?field(line,'Categoría del producto',row.category||'General','text',60):null;
  const picture=menu?uploader(line,'Foto del producto',row.photo):null;
- const price=menu?field(line,'Precio en RD$',row.price,'number'):null;if(price){price.min=0;price.step='.01';}
+ const price=field(line,country==='US'?'Precio en US$':'Precio en RD$',row.price,'number');if(price){price.min=0;price.step='.01';}
  const start=offer?field(line,'Desde',row.start,'date'):null,end=offer?field(line,'Hasta',row.end,'date'):null;
- line.append(action('Quitar',()=>{readers.delete(line);line.remove();}));parent.append(line);readers.set(line,()=>({name:name.value.trim(),description:desc.value.trim(),...(offer?{start:start.value,end:end.value}:{}),...(menu?{price:price.value,category:category.value.trim(),photo:picture()}:{})}));}
+ line.append(action('Quitar',()=>{readers.delete(line);line.remove();}));parent.append(line);readers.set(line,()=>({name:name.value.trim(),description:desc.value.trim(),...(price.value?{price:price.value}:{}),...(offer?{start:start.value,end:end.value}:{}),...(menu?{price:price.value,category:category.value.trim(),photo:picture()}:{})}));}
  for(const row of rows||[])add(row);parent.append(action(offer?'Añadir oferta':menu?'Añadir producto, plato o bebida':'Añadir membresía',()=>add()));return ()=>Array.from(readers.values(),f=>f());
 }
 function pointBox(loc){
@@ -69,16 +69,44 @@ async function openEditor(session){
  const fields={};if(!business)for(const [key,label,max] of [['name','Nombre público',100],['title','Profesión u oficio',100],['city','Ciudad',100],['mode','Modalidad de atención',100],['address','Dirección pública o zona de cobertura',240],['phone','Teléfono público',25]])fields[key]=field(info,label,s[key]||(key==='name'?session.user.name:''),'text',max);
  if(fields.name)fields.name.addEventListener('input',()=>{previewName.textContent=fields.name.value;});
  const point=business&&r.location?.country==='DO'?pointBox(r.location):null;
+ const portraits = new Map();
+ if (business && r.resources?.length) {
+   const team = group('Mi equipo');team.id='equipo';
+   for (const person of r.resources) {
+     const row = make('details');
+     row.append(make('summary', person.name));
+     team.append(row);
+     const mail = field(row,'Correo de la cuenta del profesional','','email',254);
+     mail.required = false;
+     const result = make('div');
+     row.append(action('Crear enlace de invitación', async () => {
+       if (!mail.value || !mail.reportValidity()) { mail.focus(); return; }
+       const invite = await api('staff/'+business+'/'+person.id+'/invite/','POST',{email:mail.value});
+       const url = new URL('https://whale-app-ebihq.ondigitalocean.app/equipo.html');
+       url.hash = new URLSearchParams(invite);
+       result.replaceChildren();
+       const address = field(result,'Enlace personal',url.href);
+       address.readOnly = true;
+       result.append(action('Copiar enlace',async()=>{await navigator.clipboard.writeText(url.href);}));
+     }),action('Desvincular o cancelar invitación',async()=>{
+       if(!confirm('¿Desvincular a '+person.name+' de este negocio o cancelar su invitación?'))return;
+       await api('staff/'+business+'/'+person.id+'/leave/','POST',{});
+       await openEditor(session);
+     }),result);
+     portraits.set(person.id, uploader(row, 'Foto de '+person.name, s.staff_photos?.[person.id]));
+   }
+ }
  const services=group('Mis servicios');if(!r.services.length)services.append(make('p','Añade un servicio para poder asociarle una foto.'));
  if(business){const manage=make('a','Administrar servicios en Business');manage.href='https://whale-app-ebihq.ondigitalocean.app/acceso.html';services.append(manage);}
  else{const inventory=await api('independents/offers/');professionalServices(services,inventory,session,fields);}
  const items={};function servicePhoto(item){const row=make('details'),legend=make('summary','Foto · '+item.name);row.dataset.photoId=item.id;row.append(legend);services.append(row);const old=s.items?.[item.id]||{};const getPhoto=uploader(row,'Foto de '+item.name,old.photo),m=business?null:field(row,'Duración en minutos (opcional)',old.minutes,'number');if(m){m.min=1;m.max=1440;}items[item.id]=()=>({photo:getPhoto(),minutes:m?.value?Number(m.value):null});}
  for(const item of r.services)servicePhoto(item);services.addEventListener('service-added',e=>servicePhoto({id:e.detail.id,name:e.detail.title}));
- let menuPhoto,menu;{const section=group('Catálogo de comida y productos');menuPhoto=uploader(section,'Foto de la carta',s.menu_photo);menu=promotions(section,s.menu,'menu');}
- const offers=promotions(group('Ofertas de la ficha'),s.offers,'offers'),plans=promotions(group('Membresías de la ficha'),s.plans,'plans');
+ let menuPhoto,menu;{const section=group('Catálogo de comida y productos');menuPhoto=uploader(section,'Foto de la carta',s.menu_photo);menu=promotions(section,s.menu,'menu',r.location?.country);}
+ const offers=promotions(group('Ofertas de la ficha'),s.offers,'offers',r.location?.country),plans=promotions(group('Membresías de la ficha'),s.plans,'plans',r.location?.country);
  const submit=make('button','Guardar ficha');submit.type='submit';submit.className='primary';form.append(submit);
  form.onsubmit=async e=>{e.preventDefault();if(submit.disabled)return;if(working){notice('Espera un momento mientras se prepara la foto.');return;}submit.disabled=true;
  try{const data={revision:r.revision,portrait:portrait(),menu_photo:menuPhoto?.()||'',offers:offers(),plans:plans(),menu:menu?.()||[],items:{}};
+ if (portraits.size) data.staff_photos = Object.fromEntries([...portraits].map(([id, read]) => [id, read()]));
  for(const [k,f] of Object.entries(fields))data[k]=f.value.trim();
  for(const [id,get] of Object.entries(items)){const item=get();if(item.photo||item.minutes)data.items[id]=item;}
  const loc=point?.();if(loc)data.location=loc;

@@ -8,9 +8,9 @@ function node(tag,text,cl){const n=document.createElement(tag);if(text!=null)n.t
 function button(text,action,cl){const n=node('button',text,cl);n.type='button';n.onclick=action;return n;}
 function img(src){if(typeof src!=='string'||!(/^(https:\/\/|data:image\/jpeg;base64,)/i).test(src))return null;const n=node('img');n.alt='';n.loading='lazy';n.referrerPolicy='no-referrer';n.src=src;n.onerror=()=>n.remove();return n;}
 async function read(path){const r=await fetch(base+path,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Object.assign(Error('No se pudo abrir esta ficha.'),{status:r.status});return r.json();}
-function modal(title,content){document.querySelector('#dialog-title').textContent=title;document.querySelector('#detail-body').replaceChildren(...content);document.querySelector('#details').showModal();}
+function modal(title,content){document.querySelector('#dialog-title').textContent=title;document.querySelector('#detail-body').replaceChildren(...content);if(!document.querySelector('#details').open)document.querySelector('#details').showModal();}
 document.querySelector('#dismiss').onclick=()=>document.querySelector('#details').close();
-function itemList(rows,country){const format=country==='US'?value=>'US$'+Number(value).toLocaleString('es-US',{maximumFractionDigits:2}):money;return rows.map(row=>{const a=node('article');a.append(node('strong',row.name||row.title));for(const t of [row.price!=null?format(row.price):'',row.description,row.validity,row.end?'Hasta '+row.end:'',row.uses?row.uses+' visitas':'',...(row.services||[]),...(row.extras||[]),row.regular!=null?'Valor regular '+format(row.regular):'',row.discount!=null?'Ahorras '+format(row.discount):''])if(t)a.append(node('p',t));return a;});}
+function itemList(rows,country){const format=country==='US'?value=>'US$'+Number(value).toLocaleString('es-US',{maximumFractionDigits:2}):money;return rows.map(row=>{const a=node('article');a.append(node('strong',row.name||row.title));for(const t of [row.price!=null?format(row.price):'',row.description,row.validity,row.end?'Hasta '+row.end:'',row.uses?row.uses+' visitas':'',...(row.services||[]),...(row.extras||[]),(row.original??row.regular)!=null?'Valor regular '+format(row.original??row.regular):'',row.discount!=null?'Ahorras '+format(row.discount):row.original!=null?'Ahorras '+format(Math.max(0,row.original-row.price)):''])if(t)a.append(node('p',t));return a;});}
 async function load(){
  if(!id)throw Error('Elige una ficha desde el directorio.');
  if(!pro){
@@ -42,6 +42,7 @@ function barberPhoto(service,name){
  return photo;
 }
 function render(b){
+ const formatPrice = value => money(value, b.country);
  document.title=b.name+' · ANON Reserva';root.replaceChildren();if(pro)document.querySelector('#back').href='./independientes.html';
  if(!pro && b.country==='US'){
    const back=new URLSearchParams({vista:'catalogo',country:'US'});
@@ -60,6 +61,11 @@ function render(b){
  if(fullAddress) desc.append(node('p',fullAddress));
  const directions=window.businessDirections({...b,address:fullAddress});
  if(directions) desc.append(directions);
+ if(phone){
+   const line=node('p'),call=node('a',phone);
+   call.href='tel:'+phone.replace(/[^0-9+]/g,'');
+   line.append(call);desc.append(line);
+ }
  desc.append(node('p',stars,'rating'));title.append(desc);root.append(title);
  const photos=list(b.business_photos);
  if(photos.length>1){
@@ -80,7 +86,7 @@ function render(b){
  const serviceGrid=node('div',null,barber?'service-list':'grid');const servicePanel=node('section');servicePanel.append(serviceGrid);root.append(servicePanel);let selected=services.find(s=>s.id===q.get('servicio'))||services[0];
  function showAction(){
   foot.replaceChildren();foot.hidden=!selected;if(!selected)return;
-  const name=selected.name||selected.title;foot.append(node('span',name+' · '+money(selected.price),'action-label'));
+  const name=selected.name||selected.title;foot.append(node('span',name+' · '+formatPrice(selected.price),'action-label'));
   const link=node('a',pro?'Solicitar servicio':'Ver horarios','cta');
   link.href=pro?'./independientes.html?'+new URLSearchParams({solicitar:selected.id,profesional:pro}):'./citas.html?'+new URLSearchParams({negocio:b.id,servicio:selected.id,paso:'horario'});
   foot.append(link);
@@ -94,7 +100,7 @@ function render(b){
    if(!barber){
     tile.append(img(s.photo)||categoryPhoto(name,s.category||b.category),node('span','✓','check'));
     const body=node('span',null,'tile-text');
-    body.append(node('strong',name),node('small',[money(s.price),s.minutes?s.minutes+' min':s.unit?'por '+s.unit:''].filter(Boolean).join(' · ')));
+    body.append(node('strong',name),node('small',[formatPrice(s.price),s.minutes?s.minutes+' min':s.unit?'por '+s.unit:''].filter(Boolean).join(' · ')));
     tile.append(body);serviceGrid.append(tile);continue;
    }
    const indicator=node('span','✓','service-choice');
@@ -105,7 +111,7 @@ function render(b){
    body.append(node('strong',name));
    const duration=s.minutes?s.minutes+' min':s.unit?'por '+s.unit:'';
    if(duration)body.append(node('small',duration));
-   tile.append(body,node('span',money(s.price),'service-price'));
+   tile.append(body,node('span',formatPrice(s.price),'service-price'));
    serviceGrid.append(tile);
   }
  }
@@ -138,11 +144,11 @@ function render(b){
      if(priced)totalCents+=cents;
      else allPriced=false;
      const line=node('article');
-     line.append(node('strong',quantity+' × '+item.name),node('p',priced?money(cents/100):"Precio por consultar"));
+     line.append(node('strong',quantity+' × '+item.name),node('p',priced?formatPrice(cents/100):"Precio por consultar"));
      line.append(button('Quitar',()=>{basket.delete(item);updateFooter();document.querySelector('#details').close();},'pill'));
      lines.push(line);
    }
-   const total=allPriced?money(totalCents/100):'Total por confirmar';
+   const total=allPriced?formatPrice(totalCents/100):'Total por confirmar';
    lines.push(node('strong','Total · '+total));
    foot.append(button('Ver pedido · '+total,()=>modal('Mi pedido',lines),'cta product-order'));
  }
@@ -157,7 +163,7 @@ function render(b){
  function openProduct(item){
    const content=[],photo=img(item.photo);
    if(photo){photo.className='product-detail-photo';content.push(photo);}
-   content.push(node('strong',money(item.price)));
+   content.push(node('strong',formatPrice(item.price)));
    if(item.description)content.push(node('p',item.description));
    let quantity=1;
    const count=node('span','1'),step=node('div',null,'store-step');
@@ -175,7 +181,7 @@ function render(b){
      const photo=img(item.photo);
      if(photo)detail.append(photo);
      const body=node('span',null,'tile-text');
-     body.append(node('strong',item.name),node('small',money(item.price)+(item.unit?' / '+item.unit:'')));
+     body.append(node('strong',item.name),node('small',formatPrice(item.price)+(item.unit?' / '+item.unit:'')));
      detail.append(body);
      const add=button('+',()=>{
        basket.set(item,(basket.get(item)||0)+1);
@@ -200,7 +206,32 @@ function render(b){
  const sections=node('div',null,'catalog-sections');
  function section(label,items,empty,icon){
    if(pro && !items.length)return;
-   const row=button('',()=>modal(label,items.length?itemList(items,b.country):[node('p',empty)]),'catalog-row');
+   const row=button('',()=>{
+     const cards=itemList(items,b.country);
+     cards.forEach((card,i)=>{
+       const item=items[i],kind=icon==='offer-tag'?'offers':'plans';
+       card.append(button(kind==='offers'?'Comprar oferta':'Comprar membresía',()=>{
+         const total=node('strong',item.price==null?'Precio por consultar':'Total · '+formatPrice(item.price));
+         const pay=button('Pagar',()=>{});pay.disabled=true;
+         const lines=[node('p',item.name),total,node('p','Los pagos están deshabilitados por el momento.'),pay];
+         if(!pro && item.purchase_key && item.price!=null){
+           const save=button('Guardar como pendiente',async()=>{
+             save.disabled=true;
+             try{
+               const {api}=await import('https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.js');
+               const session=await api('auth/session/');
+               if(!session.authenticated){const sign=node('a','Iniciar sesión');sign.href='./citas.html?vista=perfil';save.after(sign);return;}
+               await api('purchases/','POST',{business:b.id,kind,key:item.purchase_key});
+               save.textContent='Guardada en Mi perfil';
+             }catch(error){save.after(node('p',error.message));save.disabled=false;}
+           });
+           lines.push(save);
+         }
+         modal('Resumen de compra',lines);
+       }));
+     });
+     modal(label,cards.length?cards:[node('p',empty)]);
+   },'catalog-row');
    const mark=node('span',null,'catalog-icon '+icon);
    mark.setAttribute('aria-hidden','true');
    const copy=node('span',null,'catalog-copy');
@@ -212,7 +243,7 @@ function render(b){
  section('Ofertas',offers,'Aún no hay ofertas','offer-tag');
  section('Membresías',plans,'Aún no hay membresías','member-card');
  if(sections.childElementCount)root.append(sections);
- const facts=node('div',null,'facts');const reviews=button('',()=>{const lines=[node('p',stars)];for(let i=5;i>=1;i--)if(b.review_stars?.[i])lines.push(node('p',i+' ★ · '+b.review_stars[i]));modal('Reseñas',lines);});
+ const facts=node('div',null,'facts');const reviews=button('',()=>{const lines=[node('p',stars)];for(let i=5;i>=1;i--)if(b.review_stars?.[i])lines.push(node('p',i+' ★ · '+b.review_stars[i]));for(const review of b.review_comments||[])lines.push(node('p',review.stars+' ★ · '+review.comment));modal('Reseñas',lines);});
  reviews.append(node('strong','Reseñas'),node('small',stars));
  let distance='';const summary=node('small',b.address||b.mode||b.city);
  const info=button('',()=>{

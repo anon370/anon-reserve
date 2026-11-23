@@ -48,7 +48,7 @@ async function appointments() {
     if (!booking.can_rate || businesses.has(booking.business_id)) continue;
     businesses.add(booking.business_id);
     reviews.append(node('h3', 'Valorar mi visita a ' + booking.business),
-      ratingForm(booking.my_rating, stars => api('bookings/' + booking.id + '/rating/', 'POST', {stars})));
+      ratingForm(booking.my_rating, (stars, comment) => api('bookings/' + booking.id + '/rating/', 'POST', {stars,comment}),booking.my_comment));
   }
   await loadNotices('scope=client');
 }
@@ -76,6 +76,13 @@ function profile(session) {
       for (const item of owned) link('Editar ficha · ' + item.name, './editar-ficha.html?negocio=' + encodeURIComponent(item.id));
     }).catch(() => {});
   }
+  link('Mi trabajo y mis ingresos','https://whale-app-ebihq.ondigitalocean.app/equipo.html');
+  const purchaseBox=node('section');
+  purchaseBox.append(node('h2','Compras y transacciones'));actions.append(purchaseBox);
+  api('purchases/').then(({purchases})=>{
+    purchaseBox.append(node('p','Sin pagos realizados en la plataforma.'));
+    for(const p of purchases)purchaseBox.append(node('p',p.business__name+' · '+p.name+' · '+p.currency+' '+p.amount+' · Pendiente de pago'));
+  }).catch(error=>purchaseBox.append(node('p',error.message)));
   return appointments();
 }
 
@@ -153,7 +160,7 @@ function fillCard() {
   } else {
     el('service-photo').append(fallback);
   }
-  const price = money(service.price);
+  const price = money(service.price, business.country);
   el('total').textContent = price;
   el('service-terms').textContent = [price, service.minutes && service.minutes + ' min'].filter(Boolean).join(' · ');
 }
@@ -219,6 +226,42 @@ el('horarios').onclick = event => {
 el('recurso').onchange = loadSlots;
 el('servicio').onchange = () => { fillCard(); loadSlots(); };
 
+function showBarbers(resources) {
+  const select = el('recurso');
+  select.closest('.resource-row').hidden = true;
+  let group = el('barber-choice');
+  if (!group) {
+    group = document.createElement('fieldset');
+    group.id = 'barber-choice';
+    select.parentElement.after(group);
+  }
+  group.replaceChildren(node('legend','Elige tu barbero'));
+  for (const person of resources) {
+    const label = node('label');
+    const input = node('input');
+    input.type = 'radio';
+    input.name = 'barbero';
+    input.value = person.id;
+    input.checked = select.value === person.id;
+    const face = node('span',person.name.trim().split(/\s+/u).map(word => word[0]).slice(0,2).join('').toUpperCase());
+    face.className = 'barber-portrait';
+    if (person.photo) {
+      const photo = node('img');
+      photo.alt = '';
+      photo.src = person.photo;
+      photo.onerror = () => photo.remove();
+      face.append(photo);
+    }
+    label.append(input, face, node('span',person.name));
+    input.onchange = () => {
+      if (saving) return;
+      select.value = person.id;
+      loadSlots();
+    };
+    group.append(label);
+  }
+}
+
 async function openBooking() {
   view('booking', 'Reservar una cita');
   el('booking-section').hidden = true;
@@ -235,6 +278,7 @@ async function openBooking() {
   serviceSelect.disabled = serviceSelect.options.length === 1 && !!serviceSelect.value;
   options(el('recurso'), business.resources);
   if (['bar', 'bar_restaurante', 'restaurante', 'cafeteria'].includes(business.category)) el('resource-label').textContent = 'Mesa';
+  if (business.category === 'barberia' && business.resources.length) showBarbers(business.resources);
   openingDay = localDay(business.timezone);
   dayInput.min = openingDay;
   dayInput.max = localDay(business.timezone, 365);

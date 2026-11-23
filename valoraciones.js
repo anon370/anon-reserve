@@ -1,4 +1,4 @@
-export function ratingForm(previous, save) {
+export function ratingForm(previous, save, previousComment = "") {
   const form = document.createElement('form');
   form.className = 'review-form';
   const label = document.createElement('label');
@@ -15,13 +15,18 @@ export function ratingForm(previous, save) {
   button.textContent = previous == null ? 'Valorar' : 'Actualizar valoración';
   const message = document.createElement('span');
   message.setAttribute('role','status');
-  form.append(label,button,message);
+  const comment=document.createElement('textarea'), caption=document.createElement('label');
+  caption.textContent='Comentario público (opcional)';
+  comment.maxLength=800;
+  comment.value=previousComment;
+  caption.append(comment);
+  form.append(label,caption,button,message);
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (button.disabled) return;
     button.disabled = true;
     try {
-      await save(Number(select.value));
+      await save(Number(select.value),comment.value.trim());
       message.textContent = 'Valoración guardada.';
       button.textContent = 'Actualizar valoración';
     } catch {
