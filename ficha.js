@@ -41,10 +41,24 @@ function render(b){
  const title=node('div',null,'identity'),desc=node('div');const portrait=img(b.profile_photo||b.photo);if(portrait){portrait.className='store-cover';}title.classList.add('store-identity');
  desc.append(node('h1',b.name));if(portrait)desc.append(portrait);desc.append(node('p',[pro?(b.title||'Profesional independiente'):(labels[b.category]||b.category),b.city].filter(Boolean).join(' · ')));
  const stars=b.rating_count?('★ '+Number(b.rating_average).toFixed(1)+' · '+b.rating_count+' reseñas'):'Sin reseñas todavía';
- if(b.address) desc.append(node('p',b.address));
- const directions=window.businessDirections(b);
+ const region=b.country==='US' ? [b.state_code || b.listing?.state_code,b.listing?.postal].filter(Boolean).join(' ') : '';
+ const fullAddress=[b.address,region].filter(Boolean).join(', ');
+ if(fullAddress) desc.append(node('p',fullAddress));
+ const directions=window.businessDirections({...b,address:fullAddress});
  if(directions) desc.append(directions);
  desc.append(node('p',stars,'rating'));title.append(desc);root.append(title);
+ const photos=list(b.business_photos);
+ if(photos.length>1){
+   const group=node('div',null,'store-gallery');group.setAttribute('aria-label','Fotos del negocio');
+   for(const [i,photo] of photos.entries()){
+     const thumb=img(photo.src);
+     if(!thumb)continue;
+     const label=photo.label || 'Foto '+(i+1);
+     const show=button('',()=>{const full=img(photo.src);full.alt=label;full.className='gallery-full';modal(label,[full]);});
+     show.setAttribute('aria-label','Ampliar '+label);show.append(thumb);group.append(show);
+   }
+   desc.append(group);
+ }
  const head=node('div',null,'section-head');
 
  root.append(head);
