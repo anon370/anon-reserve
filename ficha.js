@@ -22,7 +22,7 @@ async function load(){
  try{return await read('independents/'+encodeURIComponent(pro)+'/profile/');}catch(error){
    if(error.status!==404)throw error;
    let offset=0;
-   while(offset!=null){const page=await read('independents/?country=DO&offset='+offset);const o=page.offers.find(x=>x.id===pro);if(o)return {id:o.id,name:o.public_name,city:o.city,phone:o.phone,title:page.categories[o.category],services:[o],rating_count:o.rating_count,rating_average:o.rating_average};offset=page.next;}
+   while(offset!=null){const page=await read('independents/?offset='+offset);const o=page.offers.find(x=>x.id===pro);if(o)return {id:o.id,name:o.public_name,country:o.country,city:o.city,phone:o.phone,title:page.categories[o.category],services:[o],rating_count:o.rating_count,rating_average:o.rating_average};offset=page.next;}
    throw Error('Este profesional ya no está publicado.');
  }
 }
@@ -84,6 +84,15 @@ function render(b){
  root.append(head);
  const barber=!pro && b.category==='barberia';
  const serviceGrid=node('div',null,barber?'service-list':'grid');const servicePanel=node('section');servicePanel.append(serviceGrid);root.append(servicePanel);let selected=services.find(s=>s.id===q.get('servicio'))||services[0];
+ function checkout(lines, total, actions=[]) {
+   const pay=node('button','Pagar','cta');
+   pay.type='button';
+   pay.disabled=true;
+   modal('Resumen de compra',[
+     node('p',b.name),...lines,node('strong',total),
+     node('p','Los pagos están deshabilitados por el momento.'),pay,...actions
+   ]);
+ }
  function showAction(){
   foot.replaceChildren();foot.hidden=!selected;if(!selected)return;
   const name=selected.name||selected.title;foot.append(node('span',name+' · '+formatPrice(selected.price),'action-label'));
@@ -117,6 +126,15 @@ function render(b){
  }
  cards();if(!services.length && !products.length && !drinks.length)servicePanel.append(node('p','Este perfil todavía no tiene servicios disponibles.','sub'));
  if(services.length>4){const more=button(expanded?'Mostrar menos':'Ver todos los servicios',()=>{expanded=!expanded;cards();more.textContent=expanded?'Mostrar menos':'Ver todos los servicios';},'more');servicePanel.append(more);}
+ if(services.length) {
+   servicePanel.append(button('Comprar servicio',()=>{
+     const service=selected;
+     const details=[node('p',service.name||service.title)];
+     if(service.minutes)details.push(node('p',service.minutes+' min'));
+     if(service.unit)details.push(node('p','Por '+service.unit));
+     checkout(details,service.price==null?'Precio por consultar':'Total · '+formatPrice(service.price));
+   },'more'));
+ }
  const catalog=[...products,...drinks];
  const productPanel=node('section');
  root.append(productPanel);
@@ -137,7 +155,7 @@ function render(b){
    if(!basket.size)return;
    let totalCents=0;
    let allPriced=true;
-   const lines=[];
+   const lines=[],summary=[];
    for(const [item,quantity] of basket){
      const priced=item.price!=null && item.price!=='' && Number.isFinite(Number(item.price));
      const cents=priced?Math.round(Number(item.price)*100)*quantity:0;
@@ -145,11 +163,15 @@ function render(b){
      else allPriced=false;
      const line=node('article');
      line.append(node('strong',quantity+' × '+item.name),node('p',priced?formatPrice(cents/100):"Precio por consultar"));
+     summary.push(line.cloneNode(true));
      line.append(button('Quitar',()=>{basket.delete(item);updateFooter();document.querySelector('#details').close();},'pill'));
      lines.push(line);
    }
    const total=allPriced?formatPrice(totalCents/100):'Total por confirmar';
-   lines.push(node('strong','Total · '+total));
+   const totalLabel=allPriced?'Total · '+total:'Total por confirmar';
+   lines.push(node('strong',totalLabel),button('Continuar al pago',()=>{
+     checkout(summary,totalLabel,[button('Volver al pedido',()=>modal('Mi pedido',lines),'pill')]);
+   },'cta'));
    foot.append(button('Ver pedido · '+total,()=>modal('Mi pedido',lines),'cta product-order'));
  }
  function addTab(label,mode){
@@ -211,9 +233,14 @@ function render(b){
      cards.forEach((card,i)=>{
        const item=items[i],kind=icon==='offer-tag'?'offers':'plans';
        card.append(button(kind==='offers'?'Comprar oferta':'Comprar membresía',()=>{
-         const total=node('strong',item.price==null?'Precio por consultar':'Total · '+formatPrice(item.price));
-         const pay=button('Pagar',()=>{});pay.disabled=true;
-         const lines=[node('p',item.name),total,node('p','Los pagos están deshabilitados por el momento.'),pay];
+         const total=item.price==null?'Precio por consultar':'Total · '+formatPrice(item.price);
+         const actions=[];
+         const lines=[node('p',item.name||item.title)];
+         const regular=item.original??item.regular;
+         if(regular!=null)lines.push(node('p','Valor regular · '+formatPrice(regular)));
+         const saving=item.discount??(regular!=null && item.price!=null?Math.max(0,Number(regular)-Number(item.price)):null);
+         if(saving!=null && saving>0)lines.push(node('p','Ahorras · '+formatPrice(saving)));
+         if(item.uses)lines.push(node('p',item.uses+' visitas'));
          if(!pro && item.purchase_key && item.price!=null){
            const save=button('Guardar como pendiente',async()=>{
              save.disabled=true;
@@ -225,9 +252,9 @@ function render(b){
                save.textContent='Guardada en Mi perfil';
              }catch(error){save.after(node('p',error.message));save.disabled=false;}
            });
-           lines.push(save);
+           actions.push(save);
          }
-         modal('Resumen de compra',lines);
+         checkout(lines,total,actions);
        }));
      });
      modal(label,cards.length?cards:[node('p',empty)]);
