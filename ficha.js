@@ -27,6 +27,20 @@ async function load(){
  }
 }
 const labels={barberia:'Barbería',salon:'Salón',mixto:'Barbería y salón',cafeteria:'Cafetería',bar_restaurante:'Bar y restaurante',bar:'Bar',restaurante:'Restaurante',suplidora:'Suplidora',otro:'Negocio'};
+function barberPhoto(service,name){
+ const hint=(name||'').toLowerCase();
+ const style=/ceja|brow/.test(hint)?'cejas':/barba|beard/.test(hint)?'barba':/corte|cabello|pelo|fade|haircut/.test(hint)?'corte':null;
+ function illustration(){
+  const photo=categoryPhoto('', 'barberia');
+  if(style)photo.src='./imagenes/servicio-'+style+'.webp';
+  photo.alt='';
+  return photo;
+ }
+ const photo=img(service.photo);
+ if(!photo)return illustration();
+ photo.onerror=()=>photo.replaceWith(illustration());
+ return photo;
+}
 function render(b){
  document.title=b.name+' · ANON Reserva';root.replaceChildren();if(pro)document.querySelector('#back').href='./independientes.html';
  if(!pro && b.country==='US'){
@@ -62,7 +76,8 @@ function render(b){
  const head=node('div',null,'section-head');
 
  root.append(head);
- const serviceGrid=node('div',null,'grid');const servicePanel=node('section');servicePanel.append(serviceGrid);root.append(servicePanel);let selected=services.find(s=>s.id===q.get('servicio'))||services[0];
+ const barber=!pro && b.category==='barberia';
+ const serviceGrid=node('div',null,barber?'service-list':'grid');const servicePanel=node('section');servicePanel.append(serviceGrid);root.append(servicePanel);let selected=services.find(s=>s.id===q.get('servicio'))||services[0];
  function showAction(){
   foot.replaceChildren();foot.hidden=!selected;if(!selected)return;
   const name=selected.name||selected.title;foot.append(node('span',name+' · '+money(selected.price),'action-label'));
@@ -74,9 +89,24 @@ function render(b){
  function cards(){
   serviceGrid.replaceChildren();for(const s of expanded?services:services.slice(0,4)){
    const name=s.name||s.title;
-   const tile=button('',()=>{selected=s;for(const n of serviceGrid.children)n.setAttribute('aria-pressed',String(n===tile));showAction();},'tile');
-   tile.setAttribute('aria-pressed',String(s===selected));const pic=img(s.photo);tile.append(pic||categoryPhoto(name,s.category||b.category),node('span','✓','check'));
-   const body=node('span',null,'tile-text');body.append(node('strong',name),node('small',[money(s.price),s.minutes?s.minutes+' min':s.unit?'por '+s.unit:''].filter(Boolean).join(' · ')));tile.append(body);serviceGrid.append(tile);
+   const tile=button('',()=>{selected=s;for(const n of serviceGrid.children)n.setAttribute('aria-pressed',String(n===tile));showAction();},barber?'service-row':'tile');
+   tile.setAttribute('aria-pressed',String(s===selected));
+   if(!barber){
+    tile.append(img(s.photo)||categoryPhoto(name,s.category||b.category),node('span','✓','check'));
+    const body=node('span',null,'tile-text');
+    body.append(node('strong',name),node('small',[money(s.price),s.minutes?s.minutes+' min':s.unit?'por '+s.unit:''].filter(Boolean).join(' · ')));
+    tile.append(body);serviceGrid.append(tile);continue;
+   }
+   const indicator=node('span','✓','service-choice');
+   indicator.setAttribute('aria-hidden','true');
+   tile.append(indicator);
+   tile.append(barberPhoto(s,name));
+   const body=node('span',null,'service-copy');
+   body.append(node('strong',name));
+   const duration=s.minutes?s.minutes+' min':s.unit?'por '+s.unit:'';
+   if(duration)body.append(node('small',duration));
+   tile.append(body,node('span',money(s.price),'service-price'));
+   serviceGrid.append(tile);
   }
  }
  cards();if(!services.length && !products.length && !drinks.length)servicePanel.append(node('p','Este perfil todavía no tiene servicios disponibles.','sub'));
