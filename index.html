@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-6ALi5VO9EF8n5k2QWbMNlC+CR37jV7ww0NDXJbZ2DVg=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-T20MdKbQIxe9m3jM/v6stR/5nbEJbTfkdAgWUGKwGLY=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -152,10 +152,14 @@ dialog { border-radius: 27px; }
   background:white; color:#161616; text-decoration:none;
 }
 #business-results .cover {
-  display:grid; place-items:center; width:100%; aspect-ratio:16/10;
+  position:relative; display:grid; place-items:center; width:100%; aspect-ratio:16/10; flex:none;
   background:#efefef; color:#525252; overflow:hidden; font-weight:650;
 }
-#business-results .cover img { width:100%; height:100%; object-fit:cover; }
+#business-results .cover img {
+  position:absolute; inset:0; display:block; width:100%; height:100%;
+  object-fit:cover; object-position:center;
+}
+#business-results .cover img.portrait { object-fit:contain; background:#111; }
 #business-results .card-copy { display:flex; flex:1; flex-direction:column; gap:.18rem; padding:.55rem .65rem .65rem; }
 #business-results .catalog-card h3 { margin:0; font-size:1rem; line-height:1.2; }
 #business-results .card-line { color:#505050; font-size:.85rem; line-height:1.35; }
@@ -253,6 +257,19 @@ const businessCategories = [
   ['tienda','Tiendas y comercios','Retail stores',['Tienda / comercio','Retail store','Tiendas']],
   ['suplidora','Suplidoras','Supply stores',['Supply store']],
   ['ferreteria','Ferreterías','Hardware stores',['Hardware store']],
+  ["deli", "Deli", "Deli", ["Deli Market", "Deli / delicatessen"]],
+  ["prestamista", "Prestamistas", "Lenders", []],
+  ["tecnologia", "Tecnología", "Technology", ["Software", "Desarrollo de software"]],
+  ["abogacia", "Abogados", "Legal services", []],
+  ["consultoria", "Consultoría", "Consulting", []],
+  ["contabilidad", "Contabilidad e impuestos", "Accounting and tax services", []],
+  ["floristeria", "Floristerías", "Florists", []],
+  ["ropa", "Ropa y accesorios", "Clothing and accessories", []],
+  ["fotografia", "Fotografía y video", "Photography and video", []],
+  ["eventos", "Eventos y decoración", "Events and decor", []],
+  ["automotriz", "Servicios automotrices", "Automotive services", []],
+  ["hogar", "Servicios del hogar", "Home services", []],
+  ["mascotas", "Servicios para mascotas", "Pet services", []],
   ['otro','Otros negocios','Other businesses',['Otro tipo de negocio','Otro negocio','Other business']]
 ];
 const translations = {
@@ -284,6 +301,10 @@ const known = new Map();
 for (const [key,es,en,forms] of businessCategories) {
   known.set(key,[es,en]);
   for (const form of [key,es,en,...forms]) aliases.set(normalize(form),key);
+}
+function categoryLabel(key) {
+  if (key === 'deli' && el('country').value === 'US') return 'Deli Market';
+  return known.get(key)?.[language];
 }
 const categoryKey = value => aliases.get(normalize(value)) || 'custom:' + normalize(value);
 let language = preference('anon.web.clientes.idioma') === 'en' ? 1 : 0;
@@ -319,7 +340,7 @@ function groups() {
   const map = new Map();
   for (const row of rows) {
     const key = categoryKey(row.category);
-    if (!map.has(key)) map.set(key, known.get(key)?.[language] || row.category);
+    if (!map.has(key)) map.set(key, categoryLabel(key) || row.category);
   }
   return map;
 }
@@ -327,7 +348,7 @@ function drawFilters() {
   const available = groups();
   const keys = [...new Set([...businessCategories.map(c=>c[0]),...available.keys(),...(category?[category]:[])])];
   const buttons = [ '', ...keys ].map(key => {
-    const label = key ? known.get(key)?.[language] || available.get(key) || key.slice(7) : t('all');
+    const label = key ? categoryLabel(key) || available.get(key) || key.slice(7) : t('all');
     const active = key === category;
     const btn = textNode('button',label,'chip' + (active ? ' active' : ''));
     btn.type = 'button';
@@ -338,7 +359,7 @@ function drawFilters() {
   el('all-categories').replaceChildren(...buttons.map(b=>new Option(b.textContent,b.dataset.key)));
   el('all-categories').value = category;
   const focused = el('categories').contains(document.activeElement) ? document.activeElement.dataset.key : null;
-  el('categories').replaceChildren(...buttons);
+  el('categories').replaceChildren(...buttons.filter(b => !b.dataset.key || available.has(b.dataset.key) || category === b.dataset.key));
   if (focused != null) buttons.find(b=>b.dataset.key===focused)?.focus({preventScroll:true});
   drawLocationFilters();
   syncPickers();
@@ -431,6 +452,7 @@ async function showPhoto(box) {
     image.alt = '';
     image.src = src;
     await image.decode();
+    if (image.naturalHeight > image.naturalWidth) image.classList.add('portrait');
     box.replaceChildren(image);
   } catch {
     if (photoCache.get(id) === entry) photoCache.delete(id);
