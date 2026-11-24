@@ -140,6 +140,24 @@ function render(b){
  root.append(productPanel);
  let productMode=!services.length && (!pro || catalog.length>0);
  const basket=new Map();
+ const cartKey='anon-reserva:carrito:'+JSON.stringify([pro?'profesional':'negocio',id]);
+ const keys=new Map(), occurrences=new Map();
+ for(const item of catalog){
+   const identity=JSON.stringify([item.id||'',item.category||'General',item.name,item.unit||'']);
+   const ordinal=occurrences.get(identity)||0;
+   keys.set(item,JSON.stringify([identity,ordinal]));
+   occurrences.set(identity,ordinal+1);
+ }
+ try{
+   const saved=new Map(JSON.parse(sessionStorage.getItem(cartKey)||'[]'));
+   for(const item of catalog){
+     const quantity=saved.get(keys.get(item));
+     if(Number.isSafeInteger(quantity)&&quantity>0)basket.set(item,quantity);
+   }
+ }catch{}
+ function saveBasket(){
+   try{sessionStorage.setItem(cartKey,JSON.stringify(Array.from(basket,([item,count])=>[keys.get(item),count])));}catch{}
+ }
  const tabs=node('div',null,'store-tabs');
  head.prepend(tabs);
  function switchMode(value){
@@ -155,7 +173,7 @@ function render(b){
    if(!basket.size)return;
    let totalCents=0;
    let allPriced=true;
-   const lines=[],summary=[];
+   const lines=[];
    for(const [item,quantity] of basket){
      const priced=item.price!=null && item.price!=='' && Number.isFinite(Number(item.price));
      const cents=priced?Math.round(Number(item.price)*100)*quantity:0;
@@ -163,16 +181,13 @@ function render(b){
      else allPriced=false;
      const line=node('article');
      line.append(node('strong',quantity+' × '+item.name),node('p',priced?formatPrice(cents/100):"Precio por consultar"));
-     summary.push(line.cloneNode(true));
-     line.append(button('Quitar',()=>{basket.delete(item);updateFooter();document.querySelector('#details').close();},'pill'));
+     line.append(button('Quitar',()=>{basket.delete(item);saveBasket();updateFooter();document.querySelector('#details').close();},'pill'));
      lines.push(line);
    }
    const total=allPriced?formatPrice(totalCents/100):'Total por confirmar';
    const totalLabel=allPriced?'Total · '+total:'Total por confirmar';
-   lines.push(node('strong',totalLabel),button('Continuar al pago',()=>{
-     checkout(summary,totalLabel,[button('Volver al pedido',()=>modal('Mi pedido',lines),'pill')]);
-   },'cta'));
-   foot.append(button('Ver pedido · '+total,()=>modal('Mi pedido',lines),'cta product-order'));
+   lines.push(node('strong',totalLabel));
+   foot.append(button('Ver carrito · '+total,()=>modal('Carrito · '+b.name,lines),'cta product-order'));
  }
  function addTab(label,mode){
    const tab=button(label,()=>switchMode(mode==='products'));
@@ -190,7 +205,7 @@ function render(b){
    let quantity=1;
    const count=node('span','1'),step=node('div',null,'store-step');
    step.append(node('span','Cantidad'),button('−',()=>{quantity=Math.max(1,quantity-1);count.textContent=quantity;}),count,button('+',()=>{quantity++;count.textContent=quantity;}));
-   content.push(step,button('Agregar al pedido',()=>{basket.set(item,(basket.get(item)||0)+quantity);document.querySelector('#details').close();updateFooter();},'cta'));
+   content.push(step,button('Comprar · agregar al carrito',()=>{basket.set(item,(basket.get(item)||0)+quantity);saveBasket();document.querySelector('#details').close();updateFooter();},'cta'));
    modal(item.name,content);
  }
  function drawProducts(category){
@@ -205,11 +220,11 @@ function render(b){
      const body=node('span',null,'tile-text');
      body.append(node('strong',item.name),node('small',formatPrice(item.price)+(item.unit?' / '+item.unit:'')));
      detail.append(body);
-     const add=button('+',()=>{
-       basket.set(item,(basket.get(item)||0)+1);
+     const add=button('Comprar',()=>{
+       basket.set(item,(basket.get(item)||0)+1);saveBasket();
        updateFooter();
      },'product-add');
-     add.setAttribute('aria-label','Agregar '+item.name+' al pedido');
+     add.setAttribute('aria-label','Agregar '+item.name+' al carrito');
      tile.append(detail,add);grid.append(tile);
    }
  }
