@@ -264,7 +264,7 @@ el('horarios').onclick = event => {
 el('recurso').onchange = loadSlots;
 el('servicio').onchange = () => { fillCard(); loadSlots(); };
 
-function showBarbers(resources) {
+function showBarbers(resources, barberia) {
   const select = el('recurso');
   select.closest('.resource-row').hidden = true;
   let group = el('barber-choice');
@@ -273,7 +273,7 @@ function showBarbers(resources) {
     group.id = 'barber-choice';
     select.parentElement.after(group);
   }
-  group.replaceChildren(node('legend','Elige tu barbero'));
+  group.replaceChildren(node('legend',barberia?'Elige tu barbero':'Elige quién te atenderá'));
   for (const person of resources) {
     const label = node('label');
     const input = node('input');
@@ -316,7 +316,7 @@ async function openBooking() {
   serviceSelect.disabled = serviceSelect.options.length === 1 && !!serviceSelect.value;
   options(el('recurso'), business.resources);
   if (['bar', 'bar_restaurante', 'restaurante', 'cafeteria'].includes(business.category)) el('resource-label').textContent = 'Mesa';
-  if (business.category === 'barberia' && business.resources.length) showBarbers(business.resources);
+  if (business.resources.length && (business.category === 'barberia' || business.resources.some(person=>person.photo))) showBarbers(business.resources,business.category === 'barberia');
   openingDay = localDay(business.timezone);
   dayInput.min = openingDay;
   dayInput.max = localDay(business.timezone, 365);
