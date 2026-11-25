@@ -91,6 +91,14 @@ listen(el('actualizar'), 'click', appointments);
 function profile(session) {
   view('profile', 'Mi perfil');
   configurarAvisos(api);
+  const previous = document.getElementById('sms-settings');
+  if(previous) previous.remove();
+  const smsBox = document.createElement('section');
+  smsBox.id = 'sms-settings';
+  el('customer-profile').append(smsBox);
+  import('https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/sms-settings.js')
+    .then(module=>module.smsSettings(smsBox,api,'sms/preferences/'))
+    .catch(()=>smsBox.remove());
   el('profile-name').textContent = session.user.name;
   el('profile-initial').textContent = [...session.user.name.trim()][0]?.toUpperCase() || '';
   el('profile-logout').append(el('salir'));
@@ -421,3 +429,4 @@ accessTitle();
 account.catch(error => notice(error.message)).finally(() => {
   if (document.body.dataset.view === 'loading') view('access', heading.textContent);
 });
+
