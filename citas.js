@@ -203,12 +203,15 @@ function fillCard() {
   el('service-terms').textContent = [price, service.minutes && service.minutes + ' min'].filter(Boolean).join(' · ');
 }
 
-async function loadSlots() {
+async function loadSlots(refresh = false) {
+  const background = refresh === true;
   const request = ++slotRequest;
-  chosenStart = '';
-  slots = [];
-  expanded = false;
-  drawSlots();
+  if (!background) {
+    chosenStart = '';
+    slots = [];
+    expanded = false;
+    drawSlots();
+  }
   const service = getService();
   if (!service || !el('recurso').value) {
     el('slot-status').textContent = service ? 'Este servicio todavía no tiene un profesional o una mesa disponible.' : 'Elige un servicio disponible.';
@@ -218,17 +221,21 @@ async function loadSlots() {
     el('slot-status').textContent = 'Elige una fecha dentro del período de reserva.';
     return;
   }
-  el('slot-status').textContent = 'Buscando horarios…';
+  if (!background) el('slot-status').textContent = 'Buscando horarios…';
   const q = new URLSearchParams({service: service.id, resource: el('recurso').value, date: dayInput.value});
   try {
     const result = await api('catalog/' + encodeURIComponent(business.id) + '/slots/?' + q);
     if (request !== slotRequest) return;
     slots = result.slots;
-    chosenStart = slots[0]?.start || '';
+    chosenStart = background ? (slots.some(slot => slot.start === chosenStart) ? chosenStart : '') : slots[0]?.start || '';
     el('slot-status').textContent = slots.length ? '' : 'No quedan horas disponibles para este día. Prueba con otra fecha.';
+    if(result.busy_until && dayInput.value===localDay(business.timezone)){
+      el('slot-status').textContent='Ocupado hasta '+new Date(result.busy_until).toLocaleTimeString('es',{timeZone:business.timezone,hour:'2-digit',minute:'2-digit'})+'. '+el('slot-status').textContent;
+    }
     drawSlots();
   } catch (err) {
     if (request !== slotRequest) return;
+    if (background) return;
     el('slot-status').textContent = err.message;
     const again = node('button', 'Volver a buscar');
     again.type = 'button';
@@ -236,6 +243,14 @@ async function loadSlots() {
     again.onclick = loadSlots;
     el('slot-status').append(' ', again);
   }
+}
+
+function refreshAvailability(){
+  if(!document.hidden && !saving && business && document.body.dataset.view === 'booking') loadSlots(true);
+}
+if(bookingMode){
+  setInterval(refreshAvailability, 30000);
+  document.addEventListener('visibilitychange',refreshAvailability);
 }
 
 el('dias').onclick = event => {
