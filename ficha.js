@@ -26,7 +26,7 @@ async function load(){
    throw Error('Este profesional ya no está publicado.');
  }
 }
-const labels={barberia:'Barbería',salon:'Salón',mixto:'Barbería y salón',cafeteria:'Cafetería',bar_restaurante:'Bar y restaurante',bar:'Bar',restaurante:'Restaurante',suplidora:'Suplidora',otro:'Negocio'};
+const labels={barberia:'Barbería',salon:'Salón',mixto:'Barbería y salón',cafeteria:'Cafetería',bar_restaurante:'Bar y restaurante',bar:'Bar',restaurante:'Restaurante',rent_car:'Rent Car — Alquiler de vehículos',suplidora:'Suplidora',otro:'Negocio'};
 function barberPhoto(service,name){
  const hint=(name||'').toLowerCase();
  const style=/ceja|brow/.test(hint)?'cejas':/barba|beard/.test(hint)?'barba':/corte|cabello|pelo|fade|haircut/.test(hint)?'corte':null;
@@ -107,7 +107,9 @@ function render(b){
    const tile=button('',()=>{selected=s;for(const n of serviceGrid.children)n.setAttribute('aria-pressed',String(n===tile));showAction();},barber?'service-row':'tile');
    tile.setAttribute('aria-pressed',String(s===selected));
    if(!barber){
-    tile.append(img(s.photo)||categoryPhoto(name,s.category||b.category),node('span','✓','check'));
+    const picture=img(s.photo), fallback=()=>categoryPhoto(name,s.category||b.category);
+    if(picture)picture.onerror=()=>picture.replaceWith(fallback());
+    tile.append(picture||fallback(),node('span','✓','check'));
     const body=node('span',null,'tile-text');
     body.append(node('strong',name),node('small',[formatPrice(s.price),s.minutes?s.minutes+' min':s.unit?'por '+s.unit:''].filter(Boolean).join(' · ')));
     tile.append(body);serviceGrid.append(tile);continue;
