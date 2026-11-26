@@ -1,4 +1,5 @@
 import {categoryPhoto, money} from "./servicio-visual.js";
+import {bookingRatingForm} from './valoraciones.js?v=resenas-negocios';
 const base='https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/';
 const q=new URLSearchParams(location.search), pro=q.get('profesional'), id=pro||q.get('negocio');
 const root=document.querySelector('#profile'), foot=document.querySelector('#action');
@@ -55,7 +56,10 @@ function render(b){
  const phone=pro?b.phone:b.listing?.phone;
  const title=node('div',null,'identity'),desc=node('div');const portrait=img(b.profile_photo||b.photo);if(portrait){portrait.className='store-cover';}title.classList.add('store-identity');
  desc.append(node('h1',b.name));if(portrait)desc.append(portrait);desc.append(node('p',[pro?(b.title||'Profesional independiente'):(labels[b.category]||b.category),b.city].filter(Boolean).join(' · ')));
- const stars=b.rating_count?('★ '+Number(b.rating_average).toFixed(1)+' · '+b.rating_count+' reseñas'):'Sin reseñas todavía';
+ const ratingLabel = row => row.rating_count
+   ? '★ '+Number(row.rating_average).toFixed(1)+' · '+row.rating_count+(row.rating_count===1?' reseña':' reseñas')
+   : 'Sin reseñas todavía';
+ const ratingText=node('p',ratingLabel(b),'rating');
  const region=b.country==='US' ? [b.state_code || b.listing?.state_code,b.listing?.postal].filter(Boolean).join(' ') : '';
  const fullAddress=[b.address,region].filter(Boolean).join(', ');
  if(fullAddress) desc.append(node('p',fullAddress));
@@ -66,7 +70,7 @@ function render(b){
    call.href='tel:'+phone.replace(/[^0-9+]/g,'');
    line.append(call);desc.append(line);
  }
- desc.append(node('p',stars,'rating'));title.append(desc);root.append(title);
+ desc.append(ratingText);title.append(desc);root.append(title);
  const photos=list(b.business_photos);
  if(photos.length>1){
    const group=node('div',null,'store-gallery');group.setAttribute('aria-label','Fotos del negocio');
@@ -288,8 +292,67 @@ function render(b){
  section('Ofertas',offers,'Aún no hay ofertas','offer-tag');
  section('Membresías',plans,'Aún no hay membresías','member-card');
  if(sections.childElementCount)root.append(sections);
- const facts=node('div',null,'facts');const reviews=button('',()=>{const lines=[node('p',stars)];for(let i=5;i>=1;i--)if(b.review_stars?.[i])lines.push(node('p',i+' ★ · '+b.review_stars[i]));for(const review of b.review_comments||[])lines.push(node('p',review.stars+' ★ · '+review.comment));modal('Reseñas',lines);});
- reviews.append(node('strong','Reseñas'),node('small',stars));
+ const facts=node('div',null,'facts');
+ const reviewTotal=node('small',ratingLabel(b)), feedback=node('div');
+ function displayRatings(row){
+   ratingText.textContent=reviewTotal.textContent=ratingLabel(row);
+   const lines=[node('p',reviewTotal.textContent)];
+   for(let i=5;i>=1;i--)if(row.review_stars?.[i])lines.push(node('p',i+' ★ · '+row.review_stars[i]));
+   for(const review of row.review_comments||[])lines.push(node('p',review.stars+' ★ · '+review.comment));
+   feedback.replaceChildren(...lines);
+ }
+ displayRatings(b);
+ async function editReview(editor){
+   const status=node('p','Buscando tu reserva…');
+   status.setAttribute('role','status');
+   editor.replaceChildren(status);
+   try{
+     const {api}=await import('https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.js');
+     const session=await api('auth/session/');
+     if(!session.authenticated){
+       const login=node('a','Iniciar sesión','cta');
+       login.href='./citas.html?'+new URLSearchParams({paso:'resena',negocio:b.id});
+       editor.replaceChildren(node('p','Inicia sesión con la cuenta de tu reserva para escribir una reseña.'),login);
+       return;
+     }
+     if(session.workspaces?.some(workspace=>workspace.id===b.id)){
+       status.textContent='Las reseñas de este negocio las escriben sus clientes.';
+       return;
+     }
+     const {bookings}=await api('bookings/?scope=client');
+     const visit=bookings.find(booking=>booking.business_id===b.id && booking.can_rate);
+     if(!visit){
+       status.textContent='Podrás escribir una reseña cuando termine una cita confirmada con este negocio.';
+       return;
+     }
+     const form=bookingRatingForm(visit,api,async ()=>{
+       try{
+         displayRatings(await read('catalog/'+encodeURIComponent(b.id)+'/'));
+         status.remove();
+       }catch{
+         status.textContent='Recarga la ficha para actualizar el promedio y los comentarios.';
+         form.after(status);
+       }
+     });
+     form.querySelector('button').className='cta';
+     editor.replaceChildren(form);
+   }catch{
+     status.textContent='No se pudo consultar tu reserva.';
+     editor.append(button('Volver a intentar',()=>editReview(editor),'more'));
+   }
+ }
+ function openReviews(edit=false){
+   const content=[];
+   if(!pro){
+     const editor=node('div');
+     editor.append(button('Escribir una reseña',()=>editReview(editor),'cta'));
+     content.push(editor);
+     if(edit)editReview(editor);
+   }
+   modal('Reseñas',[...content,feedback]);
+ }
+ const reviews=button('',()=>openReviews());
+ reviews.append(node('strong','Reseñas'),reviewTotal);
  let distance='';const summary=node('small',b.address||b.mode||b.city);
  const info=button('',()=>{
   const entries=[b.description,b.mode,b.address,b.city].filter(Boolean).map(s=>node('p',s));
@@ -300,6 +363,7 @@ function render(b){
   }
   modal('Información',entries);
  });tabs.append(button('Reseñas',()=>reviews.click(),'pill'));info.append(node('strong','Información'),summary);if(phone)info.append(node('small',phone));facts.append(reviews,info);root.append(facts);updateFooter();
+ if(!pro && location.hash==='#escribir-resena')openReviews(true);
 }
 async function offerOwnerEditor(b){
  if(pro)return;

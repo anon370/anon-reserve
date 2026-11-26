@@ -1,3 +1,10 @@
+export function bookingRatingForm(booking, api, onSaved) {
+  return ratingForm(booking.my_rating, async (stars, comment) => {
+    await api('bookings/' + booking.id + '/rating/', 'POST', {stars, comment});
+    if (onSaved) await onSaved();
+  }, booking.my_comment);
+}
+
 export function ratingForm(previous, save, previousComment = "") {
   const form = document.createElement('form');
   form.className = 'review-form';
@@ -29,8 +36,10 @@ export function ratingForm(previous, save, previousComment = "") {
       await save(Number(select.value),comment.value.trim());
       message.textContent = 'Valoración guardada.';
       button.textContent = 'Actualizar valoración';
-    } catch {
-      message.textContent = 'No se pudo guardar la valoración. Vuelve a intentarlo.';
+    } catch (error) {
+      message.textContent = error.message === 'rating_unavailable'
+        ? 'Esta cuenta no puede valorar esa visita.'
+        : 'No se pudo guardar la valoración. Vuelve a intentarlo.';
     } finally { button.disabled = false; }
   });
   return form;

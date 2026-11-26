@@ -108,6 +108,20 @@ footer .product-order{width:100%}
   line-height: 1.25;
 }
 .service-copy small { color: var(--muted); }
+.ficha-publica .review-form, .ficha-publica .review-form label {
+  display: grid;
+  gap: 6px;
+}
+.ficha-publica .review-form { gap: 12px; }
+.ficha-publica .review-form :is(select, textarea) {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: var(--bg);
+}
+.ficha-publica .review-form textarea { min-height: 5em; }
 .service-price {
   padding-top: 8px;
   max-width: 38%;
