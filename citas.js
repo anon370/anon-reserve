@@ -1,11 +1,12 @@
 import {configurarAvisos} from './avisos-cliente.js';
-import {ratingForm} from './valoraciones.js';
+import {bookingRatingForm} from './valoraciones.js?v=resenas-negocios';
 import {categoryPhoto, money} from './servicio-visual.js';
 import {api, el, identity, localDay, notice, options, node, listen, bookingList, loadNotices} from 'https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.js';
 
 const route = new URLSearchParams(location.search);
 const bookingMode = route.get('paso') === 'horario' && route.has('negocio');
 const businessId = route.get('negocio');
+const reviewMode = route.get('paso') === 'resena' && !!businessId;
 const profileURL = './citas.html?vista=perfil';
 const dayInput = el('fecha');
 const dateFormat = fields => new Intl.DateTimeFormat('es-DO', {timeZone: 'UTC', ...fields});
@@ -21,8 +22,8 @@ function businessURL() {
   if (service) params.set('servicio', service);
   return './ficha.html?' + params;
 }
-if (businessId && !bookingMode) location.replace(businessURL());
-if (bookingMode) {
+if (businessId && !bookingMode && !reviewMode) location.replace(businessURL());
+if (bookingMode || reviewMode) {
   el('atras').href = businessURL();
   el('atras').setAttribute('aria-label', 'Volver a la ficha del negocio');
 }
@@ -82,7 +83,7 @@ async function appointments() {
     if (!booking.can_rate || businesses.has(booking.business_id)) continue;
     businesses.add(booking.business_id);
     reviews.append(node('h3', 'Valorar mi visita a ' + booking.business),
-      ratingForm(booking.my_rating, (stars, comment) => api('bookings/' + booking.id + '/rating/', 'POST', {stars,comment}),booking.my_comment));
+      bookingRatingForm(booking, api));
   }
   await loadNotices('scope=client');
 }
@@ -360,6 +361,7 @@ el('reservar').addEventListener('submit', async event => {
 });
 
 const account = identity(async session => {
+  if (reviewMode) { location.replace(businessURL() + '#escribir-resena'); return; }
   if (route.get('volver') === 'catalogo' && !businessId) { location.replace('./?vista=catalogo'); return; }
   if (bookingMode) await openBooking();
   else await profile(session);
@@ -393,7 +395,8 @@ access.querySelector('[type=submit]').before(el('recuperar'));
 function accessTitle() {
   const register = !el('etiqueta-nombre').hidden;
   heading.textContent = register ? 'Crear una cuenta' : 'Iniciar sesión';
-  intro.textContent = register ? 'Crea tu cuenta de ANON Reserva.' : 'Accede a tus reservas y a tu perfil.';
+  intro.textContent = reviewMode ? 'Accede con la cuenta de tu reserva para escribir tu reseña.'
+    : register ? 'Crea tu cuenta de ANON Reserva.' : 'Accede a tus reservas y a tu perfil.';
   el('alternar').textContent = register ? 'Ya tengo una cuenta' : 'Crear una cuenta';
   password.type = 'password';
   eye.setAttribute('aria-pressed','false');
