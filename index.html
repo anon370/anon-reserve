@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=' 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-4U273zbZ+DqXXP0bSuo9CHG3gL7+WrTYuXTcBY4WmxU=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk='; style-src https://unpkg.com/leaflet@1.9.4/dist/leaflet.css 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=' 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-kwVd+O+75Yg9cCVrQQT5kymmu500mOjNuLRGa0QPS74=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk='; style-src https://unpkg.com/leaflet@1.9.4/dist/leaflet.css 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -194,7 +194,7 @@ dialog { border-radius: 27px; }
 #bienvenida .entrada-opciones {width:min(calc(100% - 40px),450px);margin-top:14px}
 #bienvenida #guest-entry {background:white;color:#111;text-decoration:none;font-weight:700}
 #bienvenida .entrada-opciones a {color:white;background:#080808;border:1px solid #777}
-</style><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"><style>#search-map{height:clamp(250px,38vh,430px);border-radius:18px;isolation:isolate}.map-pin{border:2px solid white;border-radius:50%;background:#161616;color:white;text-align:center;line-height:26px;font-weight:bold}#map-status:empty{display:none}</style></head>
+</style><style>#search-map{height:clamp(250px,38vh,430px);border-radius:18px;isolation:isolate}.map-pin{border:2px solid white;border-radius:50%;background:#161616;color:white;text-align:center;line-height:26px;font-weight:bold}#map-status:empty{display:none}</style></head>
 <body>
   <dialog id="bienvenida" aria-label="ANON Reserva">
     <div class="entrada" tabindex="-1" autofocus>
@@ -252,7 +252,7 @@ dialog { border-radius: 27px; }
   <nav class="reserva-dock" aria-label="Navegación principal"><a id="dock-home" href="#inicio" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 10.2 12 3l9 7.2v10.3h-6.3V14H9.3v6.5H3Z"/></svg><span data-i18n="home">Inicio</span></a><a id="dock-search" href="#buscar"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.4" cy="10.4" r="7.4"/><path d="m16 16 5 5"/></svg><span data-i18n="search">Buscar</span></a><a id="dock-myProfile" href="./citas.html?vista=perfil"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><circle cx="12" cy="9" r="3"/><path d="M5.3 18c1.8-5 11.6-5 13.4 0"/></svg><span data-i18n="myProfile">Mi perfil</span></a></nav>
   <footer>ANON TECH LABS</footer>
   <noscript>Activa JavaScript para ver los negocios publicados.</noscript>
-  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="></script>
+  
   <script src="./geografia-eeuu.js" integrity="sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8="></script>
   <script src="./distancia.js" integrity="sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk="></script>
   <script>'use strict';
@@ -452,7 +452,7 @@ async function showPhoto(box) {
   const id = box.dataset.business;
   let entry = photoCache.get(id);
   if (!entry || Date.now() - entry.time > 60000) {
-    const request = fetch(new URL(encodeURIComponent(id)+'/',endpoint), {
+    const request = fetch(new URL(encodeURIComponent(id)+'/?view=thumbnail',endpoint), {
       credentials:'omit', signal:AbortSignal.timeout(12000)
     }).then(async response => {
       if (!response.ok) throw Error('photo');
@@ -495,9 +495,40 @@ function searchVisibleArea() {
   }
   drawResults();
 }
+let mapAssets, mapReady = false;
+function loadMapAssets() {
+  const css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  css.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+  const js = document.createElement('script');
+  js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  js.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+  mapAssets = Promise.all([css,js].map(node => new Promise((resolve,reject) => {
+    node.crossOrigin = 'anonymous';
+    node.onload = resolve;
+    node.onerror = reject;
+    document.head.append(node);
+  }))).then(() => {
+    mapReady = true;
+    if (location.hash === '#buscar') showCatalogView();
+  }).catch(() => {
+    css.remove(); js.remove();
+    mapAssets = null;
+    if (location.hash === '#buscar') {
+      el('map-status').textContent = language?'Map unavailable':'Mapa no disponible';
+      el('map-area').disabled = true;
+    }
+  });
+}
 function syncMap(sets) {
   if(location.hash !== '#buscar') { area=null; lastFilter=null; locatingArea=false; locatedArea=false; locationMessage=''; return; }
-  if(!window.L) { el('map-status').textContent=language?'Map unavailable':'Mapa no disponible'; return; }
+  if (!mapAssets) loadMapAssets();
+  if (!mapReady) {
+    el('map-area').disabled = true;
+    el('map-status').textContent = language?'Loading map…':'Cargando mapa…';
+    return;
+  }
   if(!searchMap) {
     searchMap=L.map('search-map',{scrollWheelZoom:false});
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'origin',attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(searchMap);
@@ -668,10 +699,21 @@ function drawLanguage() {
   drawFilters();
   drawResults();
 }
+const catalogCache = new Map();
+const freshFor = 60000;
 async function refresh() {
   const country = el('country').value;
   if (pending?.country === country) return;
   pending?.controller.abort();
+  pending = null;
+  const cached = catalogCache.get(country);
+  if (cached) {
+    if (state !== 'ready' || signature !== cached.signature) {
+      rows = cached.rows; signature = cached.signature; state = 'ready';
+      drawFilters(); drawResults();
+    }
+    if (Date.now() - cached.time < freshFor) return;
+  }
   const controller = new AbortController();
   pending = {country,controller};
   const timeout = setTimeout(()=>controller.abort(),12000);
@@ -687,11 +729,13 @@ async function refresh() {
     const next = await read(endpoint);
     if(pending?.controller!==controller)return;
     const nextSignature = JSON.stringify(next);
-    if (state === 'ready' && nextSignature === signature) return;
+    if (cached && nextSignature === cached.signature) { cached.time = Date.now(); return; }
     rows = country === 'US' ? next.map(row => ({...row,catalogState:usCatalogGeography.stateFor(row)})) : next;
     signature = nextSignature; state = 'ready';
+    catalogCache.set(country,{rows,signature,time:Date.now()});
   } catch {
     if (pending?.controller !== controller) return;
+    if (cached) return;
     rows = []; signature = null; state = 'error';
   } finally {
     clearTimeout(timeout);
