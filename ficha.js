@@ -1,3 +1,4 @@
+import {giftPayment} from './regalos.js';
 import {categoryPhoto, money} from "./servicio-visual.js";
 import {bookingRatingForm} from './valoraciones.js?v=resenas-negocios';
 const base='https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/';
@@ -292,6 +293,10 @@ function render(b){
  section('Ofertas',offers,'Aún no hay ofertas','offer-tag');
  section('Membresías',plans,'Aún no hay membresías','member-card');
  if(sections.childElementCount)root.append(sections);
+ if(!pro && b.country==='DO') giftPayment(root,b,async (...args)=>{
+   const {api}=await import('https://octopus-app-wmb69.ondigitalocean.app/api/plataforma/ui/mercado.js');
+   return api(...args);
+ });
  const facts=node('div',null,'facts');
  const reviewTotal=node('small',ratingLabel(b)), feedback=node('div');
  function displayRatings(row){
