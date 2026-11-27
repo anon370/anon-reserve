@@ -193,7 +193,9 @@ dialog { border-radius: 27px; }
 #bienvenida .entrada-opciones {width:min(calc(100% - 40px),450px);margin-top:14px}
 #bienvenida #guest-entry {background:white;color:#111;text-decoration:none;font-weight:700}
 #bienvenida .entrada-opciones a {color:white;background:#080808;border:1px solid #777}
-</style><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"><style>#search-map{height:clamp(250px,38vh,430px);border-radius:18px;isolation:isolate}.map-pin{border:2px solid white;border-radius:50%;background:#161616;color:white;text-align:center;line-height:26px;font-weight:bold}#map-status:empty{display:none}</style></head>
+</style><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"><style>#search-map{height:clamp(250px,38vh,430px);border-radius:18px;isolation:isolate}.map-pin{border:2px solid white;border-radius:50%;background:#161616;color:white;text-align:center;line-height:26px;font-weight:bold}#map-status:empty{display:none}</style><link rel="stylesheet" href="./portada-santiago.css">
+<script defer src="./portada-santiago.js"></script>
+</head>
 <body>
   <dialog id="bienvenida" aria-label="ANON Reserva">
     <div class="entrada" tabindex="-1" autofocus>
@@ -220,10 +222,20 @@ dialog { border-radius: 27px; }
       <input type="search" id="query" placeholder="Nombre o categoría" autocomplete="off" enterkeyhint="search">
       <div id="search-map" aria-label="Mapa"></div><button type="button" id="map-area" class="btn secondary">Buscar en esta zona</button><small id="map-status" role="status"></small>
     </form>
-    <section class="hero">
-      <div class="hero-copy"><h1><span data-i18n="hero1">Un momento</span><br><span data-i18n="hero2">solo para ti.</span></h1><p data-i18n="intro">Explora los negocios de República Dominicana.</p></div>
-      <div class="hero-photo"><img src="./imagenes/portada-catalogo.jpg" alt=""></div>
+    <section class="hero santiago">
+      <div class="panorama">
+        <img class="paisaje" src="./imagenes/portada-santiago.webp" alt="" draggable="false">
+        <button type="button" class="monumento-tocar"><span class="sr-monumento" data-i18n="flagAction">Ondear la bandera en el Monumento de Santiago</span></button>
+        <div class="cima" aria-hidden="true"><img src="./imagenes/bandera-rd.png" alt=""></div>
+      </div>
+      <div class="hero-copy"><h1><span data-i18n="hero1">Descubre</span><br><span data-i18n="hero2">lo local.</span></h1><p data-i18n="intro">Negocios y profesionales de República Dominicana.</p>
+        <button type="button" class="regalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 8h18v4H3zM5 12v9h14v-9M12 8v13M12 8C5 9 4 4 7 3c3-1 5 5 5 5zm0 0s2-6 5-5c3 1 2 6-5 5z"/></svg><span data-i18n="giftAction">Regalar una tarjeta</span></button>
+      </div>
     </section>
+    <dialog id="tarjeta-muestra" aria-labelledby="tarjeta-titulo"><form method="dialog"><button aria-label="Cerrar / Close">×</button></form>
+      <h2 id="tarjeta-titulo" data-i18n="giftTitle">Tarjetas de regalo</h2><div class="tarjeta-visual"><small>ANON RESERVA</small><strong aria-live="polite">RD$1,500</strong></div>
+      <div class="montos"><button aria-pressed="false">RD$750</button><button aria-pressed="true">RD$1,500</button><button aria-pressed="false">RD$3,000</button></div>
+      <p data-i18n="giftPreview">Vista de muestra · Sin cobro ni envío.</p></dialog>
     <form class="search-bar" id="filters">
       <label class="country-field"><span data-i18n="country">País</span><span class="picker"><select id="country"><option value="DO" data-i18n="DO">República Dominicana</option><option value="US" data-i18n="US">Estados Unidos</option></select><span class="picker-output" aria-hidden="true"></span></span></label>
       <label id="state-field" hidden><span data-i18n="state">Estado</span><span class="picker"><select id="us-state"><option value="" data-i18n="states">Todos los estados</option><option value="FL">Florida</option><option value="NY">New York</option></select><span class="picker-output" aria-hidden="true"></span></span></label>
@@ -291,6 +303,9 @@ const businessCategories = [
   ['otro','Otros negocios','Other businesses',['Otro tipo de negocio','Otro negocio','Other business']]
 ];
 const translations = {
+  flagAction:['Ondear la bandera en el Monumento de Santiago','Wave the flag on the Santiago monument'],
+  giftAction:['Regalar una tarjeta','Give a gift card'],giftTitle:['Tarjetas de regalo','Gift cards'],
+  giftPreview:['Vista de muestra · Sin cobro ni envío.','Preview only · No charge or delivery.'],
   home:['Inicio','Home'], myProfile:['Mi perfil','My profile'],
   createAccount:['Crear cuenta','Create account'], guest:['Continuar como invitado','Continue as guest'],
   fourHalf:['4.5 ★ o más','4.5 ★ and up'], profile:['Perfil','Profile'], allCategories:['Ver todas','View all'], sort:['Ordenar','Sort'], byName:['Nombre','Name'],
@@ -298,8 +313,8 @@ const translations = {
   highPrice:['Mayor precio','Highest price'], score:['Valoración','Rating'], allScores:['Todas','All'], four:['4 estrellas o más','4 stars and up'],
   matches:['Resultados','Results'], noPublicScores:['Todavía no hay valoraciones publicadas en este directorio.','There are no published ratings in this directory yet.'],
   noRatings:['Sin valoraciones','No ratings yet'], fromPrice:['Desde','From'], reviewCount:['valoraciones','ratings'],
-  businessTab:['Negocios','Businesses'],independentTab:['Independientes','Independents'],owner:['¿Tienes un negocio?','Own a business?'], hero1:['Un momento','A moment'], hero2:['solo para ti.','just for you.'],
-  intro:['Explora los negocios de República Dominicana.','Explore businesses in the Dominican Republic.'],
+  businessTab:['Negocios','Businesses'],independentTab:['Independientes','Independents'],owner:['¿Tienes un negocio?','Own a business?'], hero1:['Descubre','Discover'], hero2:['lo local.','local.'],
+  intro:['Negocios y profesionales de República Dominicana.','Businesses and professionals in the Dominican Republic.'],
   country:['País','Country'], DO:['República Dominicana','Dominican Republic'], US:['Estados Unidos','United States'],
   state:['Estado','State'], states:['Todos los estados','All states'], chooseState:['Elige un estado','Choose a state'],
   popularCities:['Ciudades frecuentes','Popular cities'], moreCities:['Otras localidades','Other places'],

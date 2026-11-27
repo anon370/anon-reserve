@@ -1,0 +1,22 @@
+.hero.santiago{position:relative;isolation:isolate;container-type:size;height:clamp(285px,34vw,390px);min-height:0;display:flex;align-items:center;background:#211b18;touch-action:pan-y pinch-zoom;overflow:hidden}
+.hero.santiago[hidden]{display:none}
+.santiago .panorama{position:absolute;right:-1%;top:0;height:100%;aspect-ratio:1.5;transform:translateX(var(--desplazamiento,0px));transition:transform .14s ease-out;user-select:none}
+.santiago .paisaje{width:100%;height:100%;display:block;pointer-events:none}
+.santiago:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#191512 0%,#191512b3 31%,transparent 65%);pointer-events:none}
+.santiago .hero-copy{position:relative;z-index:1;min-height:0;width:57%;pointer-events:none}
+.santiago .hero-copy p{color:white}
+.santiago .regalar{pointer-events:auto;border:1px solid #fff9;border-radius:22px;background:#191714b8;color:white;display:inline-flex;gap:8px;align-items:center;padding:8px 13px;margin-top:10px;min-height:40px;font-weight:600}
+.regalar svg{width:18px;height:18px}
+.monumento-tocar{position:absolute;top:0;left:66%;width:25%;height:46%;min-width:44px;background:transparent;border:0}
+.monumento-tocar:focus-visible{outline:2px solid white;outline-offset:-4px}
+.sr-monumento{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.santiago .cima{position:absolute;left:75.95%;top:3.2%;width:3.52%;height:6.35%;opacity:0;background:url('./imagenes/cima-fondo.webp') center/cover;pointer-events:none}
+.cima:before{content:"";position:absolute;left:49%;bottom:0;height:96%;width:1px;background:#dbc8a1}
+.cima img{position:absolute;left:50%;top:2%;width:150%;height:auto;max-width:none;transform-origin:left center}
+.santiago .ondeando{animation:mostrar-rd 2.8s both}.ondeando img{animation:ondear-rd .56s ease-in-out infinite alternate}
+@keyframes mostrar-rd{0%,100%{opacity:0}8%,88%{opacity:1}}@keyframes ondear-rd{from{transform:skewY(-4deg)}to{transform:perspective(90px) rotateY(18deg) skewY(4deg)}}
+#tarjeta-muestra{width:min(92vw,390px);padding:22px;margin:auto;border:0;border-radius:20px;color:#161616}#tarjeta-muestra::backdrop{background:#0009}
+#tarjeta-muestra form{float:right}#tarjeta-muestra form button{background:#eee;border:0;border-radius:50%;width:35px;height:35px;font-size:20px}
+.tarjeta-visual{margin:15px 0;background:linear-gradient(120deg,#171717 50%,#47443e);color:white;display:flex;flex-direction:column;justify-content:space-between;padding:18px;border-radius:16px;aspect-ratio:1.95}.tarjeta-visual strong{font-size:34px}.montos{display:flex;gap:5px}.montos button{flex:1;padding:8px 4px;border:1px solid #bbb;border-radius:12px;background:white}.montos [aria-pressed=true]{background:#171717;color:white}#tarjeta-muestra p{margin-top:12px}
+@media(max-width:760px){.santiago .hero-copy{padding:18px;width:59%}.santiago .hero-copy h1{font-size:clamp(30px,8.6vw,42px);margin:0 0 8px}.santiago .hero-copy p{font-size:13px;line-height:1.4}.santiago .regalar{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.santiago .panorama{transform:none}.ondeando img{animation:none}}
