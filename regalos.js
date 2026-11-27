@@ -65,7 +65,13 @@ export async function wallet(box, api) {
   form.append(element('p','Crear tarjeta de prueba · Sin valor monetario'));
   const name = field(form,'Nombre de quien recibe','text',{maxLength:100});
   const email = field(form,'Correo de quien recibe','email',{maxLength:254});
-  const amount = amountField(form);
+  const amountLabel = element('label','Monto de la tarjeta');
+  const amount = element('select');
+  for (const value of [750, 1500, 3000]) {
+    amount.add(new Option('RD$' + value.toLocaleString('es-DO'), String(value)));
+  }
+  amountLabel.append(amount);
+  form.append(amountLabel);
   let requestId = crypto.randomUUID();
   form.oninput = () => { requestId = crypto.randomUUID(); };
   action(form,'Simular compra',async message => {
