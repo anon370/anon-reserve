@@ -15,7 +15,7 @@ window.businessDirections = (() => {
       const en = document.documentElement.lang === 'en';
       button.disabled = pending;
       button.querySelector('span').textContent = pending ? (en ? 'Locating…' : 'Localizando…') :
-        position ? (en ? 'Location active' : 'Ubicación activa') : (en ? 'Use my location' : 'Usar mi ubicación');
+        position ? (en ? 'Location active' : 'Ubicación activa') : (en ? 'Use my location' : 'Activar mi ubicación');
       const status = document.getElementById('location-status');
       status.textContent = error;
       status.hidden = !error;
