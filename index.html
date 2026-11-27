@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=' 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-3u28oexSueICdvt8MBTN+271CzE8dE6x4uLnBcyNSos=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk='; style-src https://unpkg.com/leaflet@1.9.4/dist/leaflet.css 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=' 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-QlelhkG5HpIU29Bx+M3KpaM1mYY4ZRhWhwNwIl97QDE=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-QluaoL9PI9p1CPZ2o7z8KuL2eQV9pMlWufuUbE9iSTk='; style-src https://unpkg.com/leaflet@1.9.4/dist/leaflet.css 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -328,7 +328,15 @@ const categoryKey = value => aliases.get(normalize(value)) || 'custom:' + normal
 let language = preference('anon.web.clientes.idioma') === 'en' ? 1 : 0;
 const t = key => translations[key][language];
 const initialLocation = new URLSearchParams(location.search);
-const chosenCountry = initialLocation.get('country') || preference('anon.catalog.country');
+// Infer the initial market locally. An explicit catalog or saved choice takes priority.
+function initialCountry() {
+  for (const country of [initialLocation.get('country'), preference('anon.catalog.country')]) {
+    if (country === 'DO' || country === 'US') return country;
+  }
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  return /^(?:America\/(?:New_York|Detroit|Louisville|Indianapolis|Fort_Wayne|Knox_IN|Shiprock|Atka|Kentucky\/.+|Indiana\/.+|Chicago|Menominee|North_Dakota\/.+|Denver|Boise|Phoenix|Los_Angeles|Anchorage|Juneau|Sitka|Metlakatla|Yakutat|Nome|Adak)|Pacific\/Honolulu|US\/.+)$/.test(zone) ? 'US' : 'DO';
+}
+const chosenCountry = initialCountry();
 el('country').value = chosenCountry === 'US' ? 'US' : 'DO';
 if (chosenCountry === 'US' && ['FL','NY'].includes(initialLocation.get('state'))) {
   el('us-state').value = initialLocation.get('state');
@@ -386,9 +394,22 @@ function cityKey(value, country = el('country').value) {
   if (country === 'US') return usCatalogGeography.normalize(usCatalogGeography.cityName(value));
   return normalize(value) === 'santiago' ? 'santiago de los caballeros' : normalize(value);
 }
+const coverImages = [...document.querySelectorAll('#bienvenida figure img, .hero-photo img')]
+  .map(img => ({img, original: img.getAttribute('src')}));
+function updateCover(isUS) {
+  // US photograph: National Park Service, NPGallery 3454fd91-1dd8-b71b-0b21-a93398840c35 (public domain).
+  for (const {img, original} of coverImages) {
+    const src = isUS ? './imagenes/estatua-libertad.webp' : original;
+    if (img.getAttribute('src') !== src) img.setAttribute('src',src);
+  }
+  document.querySelector('#bienvenida figcaption').textContent = isUS
+    ? (language ? 'Statue of Liberty, New York' : 'Estatua de la Libertad, Nueva York')
+    : 'Monumento de Santiago';
+}
 function drawLocationFilters() {
   const country = el('country').value, isUS = country === 'US';
   const region = el('us-state').value;
+  updateCover(isUS);
   el('filters').dataset.country = country;
   el('state-field').hidden = !isUS;
   el('us-state').disabled = !isUS;
