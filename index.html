@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-<head><link rel="preconnect" href="https://octopus-app-wmb69.ondigitalocean.app" crossorigin><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-VjVTemkf1MUq0D93RShb7TCF64hmV+QJYPD83t1t2gc=' 'sha256-Myn8k+w1r3E9/4qJP4prz0jF8PJIb1jKXEUcarDYLgs=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-KRg96oTg22dFQYL/n6CR1PCgwAucsftxw6PYKv9Mgc0='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
+<head><link rel="preconnect" href="https://octopus-app-wmb69.ondigitalocean.app" crossorigin><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; manifest-src 'self'; script-src 'sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs=' 'sha256-1gSNJMwpI161dVL7F4ZK73f/vOCi+o8QR/k3CsAdZNo=' 'sha256-Myn8k+w1r3E9/4qJP4prz0jF8PJIb1jKXEUcarDYLgs=' 'sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8=' 'sha256-4W2bDoPBouEBIT9aqzJj2GjTpHH0jM3qIuYTFpIEvzE='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://octopus-app-wmb69.ondigitalocean.app; connect-src 'self' https://octopus-app-wmb69.ondigitalocean.app; base-uri 'none'; form-action 'self'; object-src 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151515">
@@ -247,7 +247,7 @@ dialog { border-radius: 27px; }
     <nav class="filter-row" aria-label="Categorías"><div id="categories"></div></nav>
     <div class="catalog-controls">
       <label><span data-i18n="sort">Ordenar</span><select id="sort">
-        <option value="name" data-i18n="byName">Nombre</option><option value="recommended" data-i18n="recommended">Recomendados</option>
+        <option value="name" data-i18n="byName">Nombre</option><option value="distance" data-i18n="byDistance" disabled>Distancia</option><option value="recommended" data-i18n="recommended">Recomendados</option>
         <option value="score" data-i18n="topRated">Mejor valorados</option><option value="low" data-i18n="lowPrice">Menor precio</option>
         <option value="high" data-i18n="highPrice">Mayor precio</option></select></label>
       <label><span data-i18n="score">Valoración</span><select id="score"><option value="0" data-i18n="allScores">Todas</option>
@@ -263,7 +263,7 @@ dialog { border-radius: 27px; }
   <footer>ANON TECH LABS</footer>
   <noscript>Activa JavaScript para ver los negocios publicados.</noscript>
   <script src="./geografia-eeuu.js" integrity="sha256-/l3phoupZtzSW05SOqSEmzJAcvHoAK2o9HekUbrN4m8="></script>
-  <script src="./distancia.js" integrity="sha256-KRg96oTg22dFQYL/n6CR1PCgwAucsftxw6PYKv9Mgc0="></script>
+  <script src="./distancia.js" integrity="sha256-4W2bDoPBouEBIT9aqzJj2GjTpHH0jM3qIuYTFpIEvzE="></script>
   <script>'use strict';
 
 const el = id => document.getElementById(id);
@@ -306,7 +306,7 @@ const translations = {
   giftPreview:['Vista de muestra · Sin cobro ni envío.','Preview only · No charge or delivery.'],
   home:['Inicio','Home'], myProfile:['Mi perfil','My profile'],
   createAccount:['Crear cuenta','Create account'], guest:['Continuar como invitado','Continue as guest'],
-  fourHalf:['4.5 ★ o más','4.5 ★ and up'], profile:['Perfil','Profile'], allCategories:['Ver todas','View all'], sort:['Ordenar','Sort'], byName:['Nombre','Name'],
+  fourHalf:['4.5 ★ o más','4.5 ★ and up'], profile:['Perfil','Profile'], allCategories:['Ver todas','View all'], sort:['Ordenar','Sort'], byName:['Nombre','Name'], byDistance:['Distancia','Distance'],
   recommended:['Recomendados','Recommended'], topRated:['Mejor valorados','Top rated'], lowPrice:['Menor precio','Lowest price'],
   highPrice:['Mayor precio','Highest price'], score:['Valoración','Rating'], allScores:['Todas','All'], four:['4 estrellas o más','4 stars and up'],
   matches:['Resultados','Results'], noPublicScores:['Todavía no hay valoraciones publicadas en este directorio.','There are no published ratings in this directory yet.'],
@@ -341,6 +341,7 @@ const categoryKey = value => aliases.get(normalize(value)) || 'custom:' + normal
 let language = preference('anon.web.clientes.idioma') === 'en' ? 1 : 0;
 const t = key => translations[key][language];
 const initialLocation = new URLSearchParams(location.search);
+let changedCountry = false;
 const chosenCountry = initialLocation.get('country') || preference('anon.catalog.country');
 el('country').value = chosenCountry === 'US' ? 'US' : 'DO';
 if (chosenCountry === 'US' && ['FL','NY'].includes(initialLocation.get('state'))) {
@@ -448,6 +449,7 @@ function minimumPrice(row) {
 function publicRating(row) { return row.rating_count > 0 ? Number(row.rating_average) : 0; }
 function compareRows(a,b) {
   switch(el('sort').value) {
+    case 'distance': return window.businessDirections.kilometers(a) - window.businessDirections.kilometers(b) || a.name.localeCompare(b.name);
     case 'recommended': return Number(!!b.recommended)-Number(!!a.recommended) || publicRating(b)-publicRating(a) || (b.rating_count||0)-(a.rating_count||0);
     case 'score': return publicRating(b)-publicRating(a) || (b.rating_count||0)-(a.rating_count||0);
     case 'low':
@@ -511,13 +513,11 @@ function drawResults() {
     const searchable = normalize([row.name,row.city,row.address,row.category,available.get(key)].join(' '));
     if ((category && category !== key) || (city && cityKey(row.city) !== cityKey(city)) || !searchable.includes(query)) continue;
     if (publicRating(row) < Number(el('score').value)) continue;
-    const group = key;
+    const group = el('sort').value === 'distance'
+      ? (Number.isFinite(window.businessDirections.kilometers(row)) ? 'by-distance' : 'unknown-distance')
+      : key;
     if (!sets.has(group)) sets.set(group,[]);
     sets.get(group).push(row);
-  }
-  if (location.hash === '#buscar') {
-    const distance = window.businessDirections.kilometers;
-    for (const list of sets.values()) list.sort((a, b) => distance(a) - distance(b));
   }
   if (state !== 'ready' || !sets.size) {
     const note = document.createElement('div');
@@ -536,7 +536,7 @@ function drawResults() {
     return;
   }
   if (['score','recommended'].includes(el('sort').value) && !rows.some(r=>r.rating_count>0)) notice.append(textNode('p',t('noPublicScores')));
-  const categoryOrder = new Set([...businessCategories.map(c=>c[0]), ...sets.keys()]);
+  const categoryOrder = el('sort').value === 'distance' ? ['by-distance','unknown-distance'] : new Set([...businessCategories.map(c=>c[0]), ...sets.keys()]);
   for (const key of categoryOrder) {
     const list = sets.get(key);
     if (!list) continue;
@@ -544,7 +544,9 @@ function drawResults() {
     section.className = 'category-section';
     const heading = document.createElement('div');
     heading.className = 'section-heading category-title';
-    const label = available.get(key) || t('matches');
+    const label = key === 'by-distance' ? (language ? 'Closest first' : 'Más cercanos primero')
+      : key === 'unknown-distance' ? (language ? 'Distance unavailable' : 'Distancia no disponible')
+      : available.get(key) || t('matches');
     heading.append(textNode('h3',label));
     const expanded = expandedCategories.has(key);
     if (list.length > 5) {
@@ -663,6 +665,7 @@ el('categories').onclick = event => {
   category = btn.dataset.key; drawFilters(); drawResults();
 };
 el('country').onchange = () => {
+  changedCountry = true;
   remember('anon.catalog.country',el('country').value);
   initialCity = ''; el('us-state').value = '';
   rows = []; state = 'loading'; signature = null; category = ''; el('city').value = ''; el('query').value = '';
@@ -679,7 +682,16 @@ el('all-categories').onchange = () => {
   el('all-categories').closest('details').open=false;
   drawFilters(); drawResults();
 };
-new MutationObserver(()=>{if(location.hash==='#buscar')drawResults();}).observe(el('activate-location'),{attributes:true,attributeFilter:['disabled']});
+function syncDistanceSort() {
+  const active = window.businessDirections.hasLocation();
+  const sort = el('sort');
+  sort.querySelector('[value="distance"]').disabled = !active;
+  if (active) sort.value = 'distance';
+  else if (sort.value === 'distance') sort.value = 'name';
+  drawResults();
+}
+window.addEventListener('anon:location-change',syncDistanceSort);
+syncDistanceSort();
 el('query').oninput = drawResults;
 el('filters').onsubmit = e => { e.preventDefault(); drawResults(); el('results-heading').scrollIntoView({block:'start'}); };
 function showCatalogView() {
@@ -711,7 +723,7 @@ el('query-view').onsubmit = event => {
 };
 document.addEventListener('DOMContentLoaded',drawResults);
 window.addEventListener('hashchange',showCatalogView);
-window.addEventListener('pageshow',refresh);
+
 window.addEventListener('focus',refresh);
 document.addEventListener('visibilitychange',()=>{ if (!document.hidden) refresh(); });
 setInterval(()=>{ if (!document.hidden) refresh(); },30000);
@@ -730,16 +742,22 @@ welcome.addEventListener('click', event => {
 welcome.addEventListener('cancel', event => {event.preventDefault(); enterCatalog();});
 async function syncAccount() {
   try {
-    const status = await fetch(new URL('../auth/session/',endpoint),{credentials:'include',cache:'no-store'});
+    const status = await fetch(new URL('../auth/session/',endpoint),{signal:AbortSignal.timeout(3500),credentials:'include',cache:'no-store'});
     if (!status.ok) return;
-    if ((await status.json()).authenticated === true) enterCatalog();
+    const account = await status.json();
+    if (account.authenticated) {
+      enterCatalog();
+      if (!changedCountry && !initialLocation.has('country') && ['US','DO'].includes(account.country) && el('country').value !== account.country) {
+        el('country').value = account.country;
+        el('country').onchange();
+      }
+    }
   } catch { /* The public catalog remains available. */ }
 }
-window.addEventListener('pageshow',syncAccount);
+window.addEventListener('pageshow',()=>syncAccount().finally(refresh));
 
 drawLanguage();
 showCatalogView();
-refresh();
 </script>
 <script defer src="./actividad.js" integrity="sha256-+rufvyAI22d9slgQF+60PsTLr9rkx7YgEm4QPyfjHHs="></script></body>
 </html>

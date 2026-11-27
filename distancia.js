@@ -32,14 +32,17 @@ window.businessDirections = (() => {
         error = reason?.code === 1 ? (en ? 'Allow location in your browser to see distances.' : 'Permite la ubicación en tu navegador para ver las distancias.') :
           (en ? 'Location unavailable. Try again.' : 'Ubicación no disponible. Inténtalo otra vez.');
         refresh();
+        window.dispatchEvent(new Event('anon:location-change'));
       }
       pending = true; error = ''; refresh();
       if (!navigator.geolocation) return fail();
       try {
         navigator.geolocation.getCurrentPosition(({coords}) => {
+          if (!hasPoint(coords)) return fail();
           position = {latitude:coords.latitude,longitude:coords.longitude,time:Date.now()};
           try { sessionStorage.setItem(key,JSON.stringify(position)); } catch {}
           pending = false; refresh();
+          window.dispatchEvent(new Event('anon:location-change'));
         },fail,{timeout:10000,maximumAge:60000});
       } catch { fail(); }
     };
@@ -73,11 +76,13 @@ window.businessDirections = (() => {
       if (!position) return;
       const km = kilometers(b);
       const fmt = n => n.toLocaleString(english ? 'en-US' : 'es-DO',{maximumFractionDigits:1});
-      distance.textContent = fmt(km)+' km · '+fmt(km/1.609344)+' mi '+(english ? 'straight-line' : 'en línea recta') + (distanceOnly ? '' : ' · ');
+      const units = b.country === 'US' ? fmt(km/1.609344)+' mi' : fmt(km)+' km';
+      distance.textContent = units+' '+(english ? 'straight-line' : 'en línea recta') + (distanceOnly ? '' : ' · ');
     };
     group.renderDistance();
     return group;
   }
+  directions.hasLocation = () => Boolean(position);
   directions.kilometers = kilometers;
   return directions;
 })();

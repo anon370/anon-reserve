@@ -206,7 +206,10 @@ el('todas').onclick = () => {
   el('todas').setAttribute('aria-expanded',String(!picker.hidden));
   if (!picker.hidden) filters.elements.category.focus();
 };
-filters.elements.country.onchange = () => {filters.elements.city.value = ''; search();};
+let choseCountry = false;
+const requestedCountry = new URLSearchParams(location.search).get('country');
+if (['US','DO'].includes(requestedCountry)) filters.elements.country.value=requestedCountry;
+filters.elements.country.onchange = () => {choseCountry=true;filters.elements.city.value = ''; search();};
 for (const field of ['city','category','sort','stars','unit'])
   filters.elements[field].onchange = () => search();
 el('mas').onclick = () => search(true);
@@ -230,13 +233,14 @@ listen(form,'submit',async () => {
   notice((english?'Request sent to ':'Solicitud enviada a ')+offer.public_name+'.');
   await outbox();
 });
-search();
-identity(async () => {
+identity(async account => {
+  if (!choseCountry && !requestedCountry && ['US','DO'].includes(account.country)) filters.elements.country.value=account.country;
+  search();
   signedIn=true;
   await outbox();
   if(new URLSearchParams(location.search).get('vista')==='solicitudes'){el('acceso-cliente').hidden=false;el('acceso-cliente').scrollIntoView();}
   if (selected) begin(selected);
-}).catch(error=>notice(error.message));
+}).catch(error=>notice(error.message)).finally(()=>{if(!signedIn)search();});
 
 el('acceso').querySelector('h2').textContent='ANON Reserva';
 
@@ -248,7 +252,7 @@ if(entry.has('solicitar')){
     try{const detail=await api('independents/'+encodeURIComponent(anchor)+'/profile/');offer=detail.services.find(row=>row.id===id);}
     catch(error){
       let offset=0;
-      while(offset!=null){const page=await api('independents/?country=DO&offset='+offset);offer=page.offers.find(row=>row.id===id);if(offer)break;offset=page.next;}
+      while(offset!=null){const page=await api('independents/?country='+filters.elements.country.value+'&offset='+offset);offer=page.offers.find(row=>row.id===id);if(offer)break;offset=page.next;}
     }
     if(!offer)throw Error(translate('El servicio ya no está publicado.'));
     begin(offer);
