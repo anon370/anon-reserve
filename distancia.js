@@ -4,6 +4,20 @@ window.businessDirections = (() => {
   const valid = (v, max) => (typeof v === 'number' || (typeof v === 'string' && v.trim() !== '')) &&
     Number.isFinite(Number(v)) && Math.abs(Number(v)) <= max;
   const hasPoint = point => point && valid(point.latitude,90) && valid(point.longitude,180);
+  // U.S. Census address matches are interpolated street locations. Bind each
+  // match to the reviewed listing and address so an edit cannot reuse an old pin.
+  const streetMatches = new Map([
+    ['8c5f403b-9513-4c53-b9ab-e38cb8571a77|davie|4670 sw 47th terrace', [26.064055298453, -80.210214723279]],
+    ['cedbd1a6-ca17-44f5-9050-903f967e9f35|pompano|551 sample road', [26.275263366131, -80.116432173852]],
+    ['50cbca94-edf9-4588-92c5-e56490313e27|pompano|543 e sample road', [26.275261151855, -80.116572507627]]
+  ]);
+  function distancePoint(b) {
+    if (hasPoint(b)) return b;
+    if (b.country !== 'US' || b.listing?.state_code !== 'FL' || !b.listing.address_needs_review) return null;
+    const key = [b.id,b.city,b.address].map(value => String(value).trim().toLowerCase()).join('|');
+    const match = streetMatches.get(key);
+    return match ? {latitude:match[0], longitude:match[1]} : null;
+  }
   try {
     const saved = JSON.parse(sessionStorage.getItem(key));
     if (hasPoint(saved) && Date.now() - saved.time < 60000) position = saved;
@@ -48,8 +62,9 @@ window.businessDirections = (() => {
     };
     refresh();
   }
-  function kilometers(b) {
-    if (!position || !hasPoint(b)) return Infinity;
+  function kilometers(business) {
+    const b = distancePoint(business);
+    if (!position || !b) return Infinity;
     const rad = n => n * Math.PI / 180;
     const h = Math.sin(rad(b.latitude - position.latitude)/2)**2 + Math.cos(rad(position.latitude)) *
       Math.cos(rad(b.latitude)) * Math.sin(rad(b.longitude - position.longitude)/2)**2;
@@ -65,7 +80,7 @@ window.businessDirections = (() => {
     link.rel = 'noopener noreferrer';
     link.className = 'business-directions';
     link.textContent = english ? 'Get directions' : 'Cómo llegar';
-    if (!pin) return distanceOnly ? null : link;
+    if (!distancePoint(b)) return distanceOnly ? null : link;
     const group = document.createElement('div');
     group.dataset.anonDistance = '';
     const distance = document.createElement('small');
@@ -77,7 +92,7 @@ window.businessDirections = (() => {
       const km = kilometers(b);
       const fmt = n => n.toLocaleString(english ? 'en-US' : 'es-DO',{maximumFractionDigits:1});
       const units = b.country === 'US' ? fmt(km/1.609344)+' mi' : fmt(km)+' km';
-      distance.textContent = units+' '+(english ? 'straight-line' : 'en línea recta') + (distanceOnly ? '' : ' · ');
+      distance.textContent = (pin ? '' : '≈ ')+units+' '+(english ? 'straight-line' : 'en línea recta') + (distanceOnly ? '' : ' · ');
     };
     group.renderDistance();
     return group;
