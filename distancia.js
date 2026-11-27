@@ -15,7 +15,7 @@ window.businessDirections = (() => {
       const en = document.documentElement.lang === 'en';
       button.disabled = pending;
       button.querySelector('span').textContent = pending ? (en ? 'Locating…' : 'Localizando…') :
-        position ? (en ? 'Location active' : 'Ubicación activa') : (en ? 'Use my location' : 'Activar mi ubicación');
+        position ? (en ? 'Location active' : 'Ubicación activa') : (en ? 'Use my location' : 'Usar mi ubicación');
       const status = document.getElementById('location-status');
       status.textContent = error;
       status.hidden = !error;
@@ -45,7 +45,14 @@ window.businessDirections = (() => {
     };
     refresh();
   }
-  return function directions(b, english = false, distanceOnly = false) {
+  function kilometers(b) {
+    if (!position || !hasPoint(b)) return Infinity;
+    const rad = n => n * Math.PI / 180;
+    const h = Math.sin(rad(b.latitude - position.latitude)/2)**2 + Math.cos(rad(position.latitude)) *
+      Math.cos(rad(b.latitude)) * Math.sin(rad(b.longitude - position.longitude)/2)**2;
+    return 12742 * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+  function directions(b, english = false, distanceOnly = false) {
     const pin = hasPoint(b);
     if (!pin && !b.address?.trim()) return null;
     const dest = pin ? [b.latitude,b.longitude] : [b.address,b.city,b.country];
@@ -64,14 +71,13 @@ window.businessDirections = (() => {
     group.renderDistance = () => {
       distance.hidden = !position;
       if (!position) return;
-      const rad = n => n * Math.PI / 180;
-      const h = Math.sin(rad(b.latitude - position.latitude)/2)**2 + Math.cos(rad(position.latitude)) *
-        Math.cos(rad(b.latitude)) * Math.sin(rad(b.longitude - position.longitude)/2)**2;
-      const km = 12742 * Math.asin(Math.min(1, Math.sqrt(h)));
+      const km = kilometers(b);
       const fmt = n => n.toLocaleString(english ? 'en-US' : 'es-DO',{maximumFractionDigits:1});
       distance.textContent = fmt(km)+' km · '+fmt(km/1.609344)+' mi '+(english ? 'straight-line' : 'en línea recta') + (distanceOnly ? '' : ' · ');
     };
     group.renderDistance();
     return group;
-  };
+  }
+  directions.kilometers = kilometers;
+  return directions;
 })();
