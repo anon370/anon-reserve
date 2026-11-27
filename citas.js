@@ -1,3 +1,4 @@
+import {wallet} from './regalos.js';
 import {configurarAvisos} from './avisos-cliente.js';
 import {bookingRatingForm} from './valoraciones.js?v=resenas-negocios';
 import {categoryPhoto, money} from './servicio-visual.js';
@@ -118,6 +119,7 @@ function profile(session) {
     }).catch(() => {});
   }
   const purchaseBox = el('profile-purchases');
+  wallet(purchaseBox,api).catch(error=>purchaseBox.append(node('p',error.message)));
   api('purchases/').then(({purchases})=>{
     purchaseBox.append(node('p','Sin pagos realizados en la plataforma.'));
     for(const p of purchases)purchaseBox.append(node('p',p.business__name+' · '+p.name+' · '+p.currency+' '+p.amount+' · Pendiente de pago'));
